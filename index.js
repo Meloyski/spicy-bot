@@ -1,10 +1,24 @@
 const fs = require("node:fs");
 const path = require("node:path");
-const { Client, Collection, Events, GatewayIntentBits } = require("discord.js");
+const {
+  Client,
+  Collection,
+  Events,
+  GatewayIntentBits,
+  ActivityType,
+} = require("discord.js");
 const dotenv = require("dotenv");
 dotenv.config();
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMessageReactions,
+  ],
+});
 
 client.commands = new Collection();
 
@@ -28,6 +42,10 @@ for (const file of commandFiles) {
 
 client.once(Events.ClientReady, (c) => {
   console.log(`Ready! Logged in as ${c.user.tag}`);
+  client.user.setPresence({
+    activities: [{ name: `Send Noods`, type: ActivityType.STREAMING }],
+    status: "online",
+  });
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
@@ -40,22 +58,27 @@ client.on(Events.InteractionCreate, async (interaction) => {
     return;
   }
 
-  try {
-    await command.execute(interaction);
-  } catch (error) {
-    console.error(error);
-    if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({
-        content: "There was an error while executing this command!",
-        ephemeral: true,
-      });
-    } else {
-      await interaction.reply({
-        content: "There was an error while executing this command!",
-        ephemeral: true,
-      });
-    }
+  if (interaction.commandName === "ping") {
+    await interaction.reply("Pong!");
+    await interaction.editReply("Pong again!");
   }
+
+  // try {
+  //   await command.execute(interaction);
+  // } catch (error) {
+  //   console.error(error);
+  //   if (interaction.replied || interaction.deferred) {
+  //     await interaction.followUp({
+  //       content: "There was an error while executing this command!",
+  //       ephemeral: true,
+  //     });
+  //   } else {
+  //     await interaction.reply({
+  //       content: "There was an error while executing this command!",
+  //       ephemeral: true,
+  //     });
+  //   }
+  // }
 });
 
 client.login(process.env.TOKEN);
