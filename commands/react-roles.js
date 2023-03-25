@@ -40,27 +40,27 @@ module.exports = {
 
     await interaction.channel.send({ embeds: [embed], components: [button] });
 
-    const collector =
-      await interaction.channel.createMessageComponentCollector();
+    // const collector =
+    //   await interaction.channel.createMessageComponentCollector();
 
-    collector.on("collect", async (i) => {
-      const member = i.member;
+    // collector.on("collect", async (i) => {
+    //   const member = i.member;
 
-      if (i.customId === "addRole") {
-        member.roles.add(role);
-        i.reply({
-          content: `You now have the ${role.name} role.`,
-          ephemeral: true,
-        });
-      }
+    //   if (i.customId === "addRole") {
+    //     member.roles.add(role);
+    //     i.reply({
+    //       content: `You now have the ${role.name} role.`,
+    //       ephemeral: true,
+    //     });
+    //   }
 
-      if (i.customId === "removeRole") {
-        member.roles.remove(role);
-        i.reply({
-          content: `The ${role.name} role has been removed.`,
-          ephemeral: true,
-        });
-      }
-    });
+    //   if (i.customId === "removeRole") {
+    //     member.roles.remove(role);
+    //     i.reply({
+    //       content: `The ${role.name} role has been removed.`,
+    //       ephemeral: true,
+    //     });
+    //   }
+    // });
   },
 };

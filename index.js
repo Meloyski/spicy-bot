@@ -48,6 +48,26 @@ client.once(Events.ClientReady, (c) => {
   });
 });
 
+// client.on(Events.InteractionCreate, (interaction) => {
+//   const member = interaction.member;
+
+//   if (interaction.customId === "addRole") {
+//     member.roles.add(role);
+//     interaction.reply({
+//       content: `You now have the ${role.name} role.`,
+//       ephemeral: true,
+//     });
+//   }
+
+//   if (interaction.customId === "removeRole") {
+//     member.roles.remove(role);
+//     interaction.reply({
+//       content: `The ${role.name} role has been removed.`,
+//       ephemeral: true,
+//     });
+//   }
+// });
+
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
@@ -74,6 +94,45 @@ client.on(Events.InteractionCreate, async (interaction) => {
       });
     }
   }
+});
+
+// Adding the Role Mod Interaction to index.js to maintain usability on Bot restarts
+client.on("interactionCreate", async (interaction) => {
+  if (!interaction.isButton()) return; // ignore non-button interactions
+
+  if (interaction.customId === "addRole") {
+    const member = interaction.member;
+    const role = member.guild.roles.cache.find((role) => role.name === "Mod");
+    if (!role) return console.log("Role not found!"); // If the role is not found, log a message and return
+    try {
+      await member.roles.add(role); // Add the role to the member
+      await interaction.reply({
+        content: `Role "${role.name}" added!`,
+        ephemeral: true,
+      }); // Send a confirmation message
+    } catch (error) {
+      console.log(error);
+      await interaction.reply("Something went wrong while adding the role!"); // Send an error message
+    }
+  }
+
+  if (interaction.customId === "removeRole") {
+    const member = interaction.member;
+    const role = member.guild.roles.cache.find((role) => role.name === "Mod");
+    if (!role) return console.log("Role not found!"); // If the role is not found, log a message and return
+    try {
+      await member.roles.remove(role); // Add the role to the member
+      await interaction.reply({
+        content: `Role "${role.name}" removed!`,
+        ephemeral: true,
+      }); // Send a confirmation message
+    } catch (error) {
+      console.log(error);
+      await interaction.reply("Something went wrong while adding the role!"); // Send an error message
+    }
+  }
+
+  ///////////////////End Role Interaction
 });
 
 client.login(process.env.TOKEN);
