@@ -58,11 +58,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
     return;
   }
 
-  // if (interaction.commandName === "ping") {
-  //   await interaction.reply("Pong!");
-  //   await interaction.editReply("Pong again!");
-  // }
-
   try {
     await command.execute(interaction);
   } catch (error) {
