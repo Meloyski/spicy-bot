@@ -1,7 +1,4 @@
-const {
-  SlashCommandBuilder,
-  PermissionFlagsBits,
-} = require("@discordjs/builders");
+const { SlashCommandBuilder } = require("@discordjs/builders");
 
 const {
   ButtonStyle,
