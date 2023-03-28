@@ -2,6 +2,7 @@ const {
   SlashCommandBuilder,
   PermissionFlagsBits,
 } = require("@discordjs/builders");
+
 const {
   ButtonStyle,
   ActionRowBuilder,
@@ -15,14 +16,36 @@ module.exports = {
     .setDescription(
       "Allow users to choose what Class they want their 'main' to be."
     )
+    .addBooleanOption((option) =>
+      option
+        .setName("edit")
+        .setDescription(
+          "Whether to edit the existing message or send a new one."
+        )
+        .setRequired(true)
+    )
     .addStringOption((option) =>
       option
         .setName("message")
-        .setDescription("Add a message before the Class Embed.")
+        .setDescription("Add a message before the embed")
+        .setRequired(true)
+    )
+    .addStringOption((option) =>
+      option
+        .setName("title")
+        .setDescription("Add a title to the embed.")
+        .setRequired(true)
+    )
+    .addStringOption((option) =>
+      option
+        .setName("description")
+        .setDescription("Add a description to the embed.")
         .setRequired(true)
     )
     .setDefaultMemberPermissions(0),
   async execute(interaction) {
+    const editMessage = interaction.options.getBoolean("edit");
+
     const button = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId("addHunter")
@@ -47,12 +70,13 @@ module.exports = {
       .getString("message")
       .replace(/\\n/g, "\n");
 
+    const title = interaction.options.getString("title");
+    const description = interaction.options.getString("description");
+
     const embed = new EmbedBuilder()
       .setColor(0xec008c)
-      .setTitle(`Choose Your Destiny Main`)
-      .setDescription(
-        "Select which Guardian class is your main, you can only select one. This will also display your Discord username under that specific class."
-      )
+      .setTitle(title) // Choose Your Destiny Main
+      .setDescription(description) // Select which Guardian class is your main, you can only select one. This will also display your Discord username under that specific class.
       .addFields({
         name: "Guardian Classes",
         value:
@@ -61,12 +85,25 @@ module.exports = {
       });
 
     interaction.deferReply();
-    interaction.deleteReply();
+    if (editMessage) {
+      const messages = await interaction.channel.messages.fetch({
+        limit: 1,
+        before: interaction.id,
+      });
+      const previousMessage = messages.first();
 
-    await interaction.channel.send({
-      content: message,
-      embeds: [embed],
-      components: [button],
-    });
+      await previousMessage.edit({
+        content: message,
+        embeds: [embed],
+        components: [button],
+      });
+    } else {
+      await interaction.channel.send({
+        content: message,
+        embeds: [embed],
+        components: [button],
+      });
+    }
+    interaction.deleteReply();
   },
 };
