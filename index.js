@@ -100,12 +100,75 @@ client.on(Events.InteractionCreate, async (interaction) => {
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isButton()) return; // ignore non-button interactions
 
+  const member = interaction.member;
+
+  const hunters = member.guild.roles.cache.find(
+    (role) => role.name === "Hunters"
+  );
+  const titans = member.guild.roles.cache.find(
+    (role) => role.name === "Titans"
+  );
+  const warlocks = member.guild.roles.cache.find(
+    (role) => role.name === "Warlocks"
+  );
+
+  if (interaction.customId === "addHunter") {
+    const role = hunters;
+    if (!role) return console.log("Role not found!"); // If the role is not found, log a message and return
+    try {
+      await member.roles.add(role);
+      await member.roles.remove(titans);
+      await member.roles.remove(warlocks);
+      await interaction.reply({
+        content: `Cayde would say something funny about now! Welcome to ${role}`,
+        ephemeral: true,
+      }); // Send a confirmation message
+    } catch (error) {
+      console.log(error);
+      await interaction.reply("Something went wrong while adding the role!"); // Send an error message
+    }
+  }
+
+  if (interaction.customId === "addTitan") {
+    const role = titans;
+    if (!role) return console.log("Role not found!"); // If the role is not found, log a message and return
+    try {
+      await member.roles.add(role);
+      await member.roles.remove(hunters);
+      await member.roles.remove(warlocks);
+      await interaction.reply({
+        content: `Zavala would say indeed! Welcome to ${role}`,
+        ephemeral: true,
+      }); // Send a confirmation message
+    } catch (error) {
+      console.log(error);
+      await interaction.reply("Something went wrong while adding the role!"); // Send an error message
+    }
+  }
+
+  if (interaction.customId === "addWarlock") {
+    const role = warlocks;
+    if (!role) return console.log("Role not found!"); // If the role is not found, log a message and return
+    try {
+      await member.roles.add(role);
+      await member.roles.remove(hunters);
+      await member.roles.remove(titans);
+      await interaction.reply({
+        content: `Ikora would be proud! Welcome to ${role}`,
+        ephemeral: true,
+      }); // Send a confirmation message
+    } catch (error) {
+      console.log(error);
+      await interaction.reply("Something went wrong while adding the role!"); // Send an error message
+    }
+  }
+
+  // Add Role (Mod) for test server
   if (interaction.customId === "addRole") {
-    const member = interaction.member;
     const role = member.guild.roles.cache.find((role) => role.name === "Mod");
     if (!role) return console.log("Role not found!"); // If the role is not found, log a message and return
     try {
-      await member.roles.add(role); // Add the role to the member
+      await member.roles.add(role);
       await interaction.reply({
         content: `Role "${role.name}" added!`,
         ephemeral: true,
@@ -116,12 +179,12 @@ client.on("interactionCreate", async (interaction) => {
     }
   }
 
+  // Add Role (Mod) for test server
   if (interaction.customId === "removeRole") {
-    const member = interaction.member;
     const role = member.guild.roles.cache.find((role) => role.name === "Mod");
     if (!role) return console.log("Role not found!"); // If the role is not found, log a message and return
     try {
-      await member.roles.remove(role); // Add the role to the member
+      await member.roles.remove(role);
       await interaction.reply({
         content: `Role "${role.name}" removed!`,
         ephemeral: true,
