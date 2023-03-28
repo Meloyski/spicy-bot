@@ -48,26 +48,6 @@ client.once(Events.ClientReady, (c) => {
   });
 });
 
-// client.on(Events.InteractionCreate, (interaction) => {
-//   const member = interaction.member;
-
-//   if (interaction.customId === "addRole") {
-//     member.roles.add(role);
-//     interaction.reply({
-//       content: `You now have the ${role.name} role.`,
-//       ephemeral: true,
-//     });
-//   }
-
-//   if (interaction.customId === "removeRole") {
-//     member.roles.remove(role);
-//     interaction.reply({
-//       content: `The ${role.name} role has been removed.`,
-//       ephemeral: true,
-//     });
-//   }
-// });
-
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
@@ -102,64 +82,62 @@ client.on("interactionCreate", async (interaction) => {
 
   const member = interaction.member;
 
-  const hunters = member.guild.roles.cache.find(
-    (role) => role.name === "Hunters"
-  );
-  const titans = member.guild.roles.cache.find(
-    (role) => role.name === "Titans"
-  );
-  const warlocks = member.guild.roles.cache.find(
-    (role) => role.name === "Warlocks"
-  );
+  const roles = {
+    Hunters: {
+      role: member.guild.roles.cache.find((role) => role.name === "Hunters"),
+      message: "Cayde would say something funny about now!",
+    },
+    Titans: {
+      role: member.guild.roles.cache.find((role) => role.name === "Titans"),
+      message: "Zavala would say indeed!",
+    },
+    Warlocks: {
+      role: member.guild.roles.cache.find((role) => role.name === "Warlocks"),
+      message: "Ikora would be proud!",
+    },
+  };
 
-  if (interaction.customId === "addHunter") {
-    const role = hunters;
-    if (!role) return console.log("Role not found!"); // If the role is not found, log a message and return
+  switch (interaction.customId) {
+    case "addHunter":
+      addRole(roles.Hunters.role, roles.Hunters.message);
+      removeRoles([roles.Titans.role, roles.Warlocks.role]);
+      break;
+    case "addTitan":
+      addRole(roles.Titans.role, roles.Titans.message);
+      removeRoles([roles.Hunters.role, roles.Warlocks.role]);
+      break;
+    case "addWarlock":
+      addRole(roles.Warlocks.role, roles.Warlocks.message);
+      removeRoles([roles.Hunters.role, roles.Titans.role]);
+      break;
+    default:
+      console.log("Invalid custom ID");
+      break;
+  }
+
+  async function addRole(role, message) {
+    if (!role) {
+      console.log("Role not found!");
+      return;
+    }
+
     try {
       await member.roles.add(role);
-      await member.roles.remove(titans);
-      await member.roles.remove(warlocks);
       await interaction.reply({
-        content: `Cayde would say something funny about now! Welcome to ${role}`,
+        content: `${message} Welcome to ${role}`,
         ephemeral: true,
-      }); // Send a confirmation message
+      });
     } catch (error) {
       console.log(error);
-      await interaction.reply("Something went wrong while adding the role!"); // Send an error message
+      await interaction.reply("Something went wrong while adding the role!");
     }
   }
 
-  if (interaction.customId === "addTitan") {
-    const role = titans;
-    if (!role) return console.log("Role not found!"); // If the role is not found, log a message and return
+  async function removeRoles(roles) {
     try {
-      await member.roles.add(role);
-      await member.roles.remove(hunters);
-      await member.roles.remove(warlocks);
-      await interaction.reply({
-        content: `Zavala would say indeed! Welcome to ${role}`,
-        ephemeral: true,
-      }); // Send a confirmation message
+      await member.roles.remove(roles);
     } catch (error) {
       console.log(error);
-      await interaction.reply("Something went wrong while adding the role!"); // Send an error message
-    }
-  }
-
-  if (interaction.customId === "addWarlock") {
-    const role = warlocks;
-    if (!role) return console.log("Role not found!"); // If the role is not found, log a message and return
-    try {
-      await member.roles.add(role);
-      await member.roles.remove(hunters);
-      await member.roles.remove(titans);
-      await interaction.reply({
-        content: `Ikora would be proud! Welcome to ${role}`,
-        ephemeral: true,
-      }); // Send a confirmation message
-    } catch (error) {
-      console.log(error);
-      await interaction.reply("Something went wrong while adding the role!"); // Send an error message
     }
   }
 
