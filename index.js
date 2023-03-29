@@ -6,6 +6,8 @@ const {
   Events,
   GatewayIntentBits,
   ActivityType,
+  ButtonBuilder,
+  ButtonStyle,
 } = require("discord.js");
 const dotenv = require("dotenv");
 dotenv.config();
@@ -139,6 +141,38 @@ client.on("interactionCreate", async (interaction) => {
     } catch (error) {
       console.log(error);
     }
+  }
+
+  // Verified
+  if (interaction.customId === "verified") {
+    const message = interaction.message;
+    const mentionedUser = message.mentions.users.first();
+    const verifiedRole = message.guild.roles.cache.find(
+      (role) => role.name === "Verified"
+    );
+
+    if (!verifiedRole) return console.error("Role not found.");
+
+    const mentionedMember = message.guild.members.cache.get(mentionedUser.id);
+
+    if (!mentionedMember) return console.error("Member not found.");
+
+    await mentionedMember.roles.add(verifiedRole);
+
+    // Disable the button
+    const verifiedButton = new ButtonBuilder()
+      .setCustomId("verified")
+      .setLabel("Already Verified")
+      .setStyle(ButtonStyle.Success)
+      .setDisabled(true);
+
+    message.components[0].components[0] = verifiedButton;
+
+    await message.edit({ components: message.components });
+
+    await interaction.reply(
+      `<@!${mentionedMember.user.id}> has been verified by <@!${interaction.user.id}>.`
+    );
   }
 
   // Add Role (Mod) for test server
