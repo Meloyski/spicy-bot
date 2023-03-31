@@ -8,6 +8,10 @@ const {
   ActivityType,
   ButtonBuilder,
   ButtonStyle,
+  ActionRowBuilder,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
 } = require("discord.js");
 const dotenv = require("dotenv");
 dotenv.config();
@@ -143,6 +147,12 @@ client.on("interactionCreate", async (interaction) => {
     }
   }
 
+  if (interaction.command === "bungie-id") {
+    // Your code to execute when the 'verify' command is called goes here
+    await interaction.reply("Test");
+    console.log("test");
+  }
+
   // Verified
   if (interaction.customId === "verified") {
     const message = interaction.message;
@@ -206,8 +216,30 @@ client.on("interactionCreate", async (interaction) => {
       await interaction.reply("Something went wrong while adding the role!"); // Send an error message
     }
   }
-
   ///////////////////End Role Interaction
+});
+
+client.on("interactionCreate", async (interaction) => {
+  // Modal Interaction
+  if (!interaction.isModalSubmit()) return;
+
+  if (interaction.customId === "bungie") {
+    await interaction.reply({
+      content: "Your Bungie ID has been submitted!",
+      ephemeral: true,
+    });
+
+    const bungieId = interaction.fields.getTextInputValue("bungie-id-name");
+    // const displayName = interaction.member.displayName;
+
+    await interaction.member.setNickname(bungieId);
+  }
+
+  // const verifiedRole = message.guild.roles.cache.find(
+  //   (role) => role.name === "Verified"
+  // );
+
+  // await mentionedMember.roles.add(verifiedRole);
 });
 
 client.login(process.env.TOKEN);
