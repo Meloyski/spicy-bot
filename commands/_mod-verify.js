@@ -15,12 +15,13 @@ module.exports = {
     )
     .setDefaultMemberPermissions(0),
   async execute(interaction) {
-    const button = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId("bungie")
-        .setLabel(`Add BungieID`)
-        .setStyle(ButtonStyle.Secondary)
-    );
+    // const button = new ActionRowBuilder().addComponents(
+    //   new ButtonBuilder()
+    //     .setCustomId("bungie")
+    //     .setLabel(`Add BungieID`)
+    //     .setStyle(ButtonStyle.Secondary)
+    // );
+    // Commented out button since Modals aren't supported with the use of buttons v14.7.1
 
     const embed = new EmbedBuilder()
       .setColor(0xec008c)
