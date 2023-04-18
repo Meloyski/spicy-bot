@@ -73,17 +73,21 @@ module.exports = {
       new ButtonBuilder()
         .setCustomId("lfgJoin")
         .setLabel(`Join`)
-        .setStyle(ButtonStyle.Secondary),
+        .setStyle(ButtonStyle.Success),
 
       new ButtonBuilder()
         .setCustomId("lfgReserve")
-        .setLabel(`Join as a Reserve`)
-        .setStyle(ButtonStyle.Secondary),
+        .setLabel(`Backup`)
+        .setStyle(ButtonStyle.Primary),
 
       new ButtonBuilder()
         .setCustomId("lfgRemove")
         .setLabel(`Remove`)
-        .setStyle(ButtonStyle.Secondary)
+        .setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder()
+        .setCustomId("lfgDelete")
+        .setLabel(`End`)
+        .setStyle(ButtonStyle.Danger)
     );
 
     const lfgMaxPlayers = interaction.options.getString("players");
