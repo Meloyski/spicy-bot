@@ -277,7 +277,7 @@ client.on("interactionCreate", async (interaction) => {
     }
   }
 
-  if (interaction.customId === "lfgReserve") {
+  if (interaction.customId === "lfgBackup") {
     // Remove user from Current Players list if they are on it
     if (currentPlayers.includes(`<@${nickname}>`)) {
       currentPlayersField.value = currentPlayersField.value.replace(

@@ -76,7 +76,7 @@ module.exports = {
         .setStyle(ButtonStyle.Success),
 
       new ButtonBuilder()
-        .setCustomId("lfgReserve")
+        .setCustomId("lfgBackup")
         .setLabel(`Backup`)
         .setStyle(ButtonStyle.Primary),
 
