@@ -232,49 +232,81 @@ client.on("interactionCreate", async (interaction) => {
     (field) => field.name === "Reserve Players"
   );
 
-  if (
-    interaction.customId === "lfgJoin" ||
-    interaction.customId === "lfgReserve"
-  ) {
-    const isJoining = interaction.customId === "lfgJoin";
-    const currentList = isJoining ? currentPlayersField : reservePlayersField;
-    const otherList = isJoining ? reservePlayersField : currentPlayersField;
-    const successMessage = isJoining
-      ? "added to this LFG group"
-      : "added to the reserve players list";
-    const alreadyAddedMessage = isJoining
-      ? "already been added to this LFG group"
-      : "already on the reserve players list";
+  const currentPlayers = currentPlayersField.value.match(/<@.*?>/g) || [];
+  const reservePlayers = reservePlayersField.value.match(/<@.*?>/g) || [];
 
-    if (!currentList.value.includes(`<@${nickname}>`)) {
-      currentList.value += `\n<@${nickname}>`;
-      otherList.value = otherList.value.replace(`<@${nickname}>`, "");
+  if (interaction.customId === "lfgJoin") {
+    const maxPlayers = interaction.message.embeds[0].title[2];
+    console.log(`currentPlayers: ${currentPlayers}, maxPlayers: ${maxPlayers}`);
+
+    if (currentPlayers.length >= maxPlayers) {
+      await interaction.reply({
+        content: `Sorry, this group is already full!`,
+        ephemeral: true,
+      });
+    } else {
+      // Remove user from Reserves list if they are on it
+      if (reservePlayers.includes(`<@${nickname}>`)) {
+        reservePlayersField.value = reservePlayersField.value.replace(
+          `<@${nickname}>`,
+          ""
+        );
+      }
+      if (!currentPlayers.includes(`<@${nickname}>`)) {
+        currentPlayersField.value += `\n<@${nickname}>`;
+        await message.edit({ embeds: [embed] });
+        await interaction.reply({
+          content: `You've been successfully added to this LFG group!`,
+          ephemeral: true,
+        });
+      } else {
+        await interaction.reply({
+          content: `You've already been added to this LFG group!`,
+          ephemeral: true,
+        });
+      }
+    }
+  }
+
+  if (interaction.customId === "lfgReserve") {
+    // Remove user from Current Players list if they are on it
+    if (currentPlayers.includes(`<@${nickname}>`)) {
+      currentPlayersField.value = currentPlayersField.value.replace(
+        `<@${nickname}>`,
+        ""
+      );
+    }
+    if (!reservePlayers.includes(`<@${nickname}>`)) {
+      reservePlayersField.value += `\n<@${nickname}>`;
       await message.edit({ embeds: [embed] });
       await interaction.reply({
-        content: `You've been successfully ${successMessage}!`,
+        content: `You've been successfully added to the reserve players list!`,
         ephemeral: true,
       });
     } else {
       await interaction.reply({
-        content: `You've ${alreadyAddedMessage}!`,
+        content: `You're already on the reserve players list!`,
         ephemeral: true,
       });
     }
   }
 
   if (interaction.customId === "lfgRemove") {
-    const currentList = currentPlayersField;
-    const reserveList = reservePlayersField;
-
-    if (currentList.value.includes(`<@${nickname}>`)) {
-      currentList.value = currentList.value.replace(`<@${nickname}>`, "");
+    if (currentPlayers.includes(`<@${nickname}>`)) {
+      currentPlayersField.value = currentPlayersField.value.replace(
+        `<@${nickname}>`,
+        ""
+      );
       await message.edit({ embeds: [embed] });
       await interaction.reply({
         content: `You've been successfully removed from the current players list!`,
         ephemeral: true,
       });
-    } else if (reserveList.value.includes(`<@${nickname}>`)) {
-      reserveList.value = reserveList.value.replace(`<@${nickname}>`, "");
+    } else if (reservePlayersField.value.includes(`<@${nickname}>`)) {
+      reservePlayersField.value = reservePlayersField.value.replace(
+        `<@${nickname}>`,
+        ""
+      );
       await message.edit({ embeds: [embed] });
       await interaction.reply({
         content: `You've been successfully removed from the reserve players list!`,
