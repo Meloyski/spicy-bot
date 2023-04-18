@@ -19,11 +19,11 @@ module.exports = {
         .setName("players")
         .setDescription("How many players do you need?")
         .addChoices(
-          { name: "1", value: "1" },
-          { name: "2", value: "2" },
-          { name: "3", value: "3" },
-          { name: "4", value: "4" },
-          { name: "5", value: "5" }
+          { name: "1 Player", value: "1" },
+          { name: "2 Players", value: "2" },
+          { name: "3 Players", value: "3" },
+          { name: "4 Players", value: "4" },
+          { name: "5 Players", value: "5" }
         )
         .setRequired(true)
     )
@@ -71,23 +71,23 @@ module.exports = {
   async execute(interaction) {
     const button = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
-        .setCustomId("lfg-join")
+        .setCustomId("lfgJoin")
         .setLabel(`Join`)
         .setStyle(ButtonStyle.Secondary),
 
       new ButtonBuilder()
-        .setCustomId("lfg-reserve")
+        .setCustomId("lfgReserve")
         .setLabel(`Join as a Reserve`)
         .setStyle(ButtonStyle.Secondary),
 
       new ButtonBuilder()
-        .setCustomId("lfg-remove")
+        .setCustomId("lfgRemove")
         .setLabel(`Remove`)
         .setStyle(ButtonStyle.Secondary)
     );
 
-    const players = interaction.options.getString("players");
-    const activity = interaction.options.getString("activity");
+    const lfgMaxPlayers = interaction.options.getString("players");
+    const lfgActivity = interaction.options.getString("activity");
     const title = interaction.options.getString("title");
     const description = interaction.options.getString("description");
     const time = interaction.options.getString("start-time");
@@ -96,34 +96,27 @@ module.exports = {
     const displayName = interaction.member.displayName;
     const userAvatar = interaction.user.avatarURL();
 
-    const currentPlayers = 0;
-    const currentPlayerList = {
-      name: `Current Players (${currentPlayers}/${players})`,
-      value: " ",
-      inline: true,
-    };
-    const currentReserveList = {
-      name: "Reserve Players",
-      value: " ",
-      inline: true,
-    };
-
     const embed = new EmbedBuilder()
       .setColor(0xec008c)
-      .setTitle(`LF${players}: ${activity}`)
+      .setTitle(`LF${lfgMaxPlayers}: ${lfgActivity}`)
       .setAuthor({ name: displayName, iconURL: userAvatar })
       .addFields(
-        currentPlayerList,
+        {
+          name: `Current Players`, //(${currentPlayers}/${lfgMaxPlayers})
+          value: " ",
+          inline: true,
+        },
         {
           name: "\u200B",
           value: "\u200B",
           inline: true,
         },
-        currentReserveList
-      )
-      .addFields(
-        { name: "Start Date/Time", value: time, inline: true },
-        { name: "Voice", value: channel.name, inline: true }
+        {
+          name: "Reserve Players",
+          value: " ",
+          inline: true,
+        },
+        { name: "Start Date/Time", value: time, inline: true }
       );
 
     if (description) {
@@ -131,12 +124,17 @@ module.exports = {
     }
 
     if (title) {
-      embed.setTitle(`LF${players}: ${activity} ${title && `- ${title}`}`);
+      embed.setTitle(
+        `LF${lfgMaxPlayers}: ${lfgActivity} ${title && `- ${title}`}`
+      );
     }
 
-    await interaction.channel.send({ embeds: [embed], components: [button] });
+    if (channel) {
+      embed.addFields({ name: "Voice", value: channel.name, inline: true });
+    }
 
     interaction.deferReply();
+    await interaction.channel.send({ embeds: [embed], components: [button] });
     interaction.deleteReply();
   },
 };
