@@ -240,10 +240,19 @@ client.on("interactionCreate", async (interaction) => {
     console.log(`currentPlayers: ${currentPlayers}, maxPlayers: ${maxPlayers}`);
 
     if (currentPlayers.length >= maxPlayers) {
-      await interaction.reply({
-        content: `Sorry, this group is already full!`,
-        ephemeral: true,
-      });
+      if (!reservePlayers.includes(`<@${nickname}>`)) {
+        reservePlayersField.value += `\n<@${nickname}>`;
+        await message.edit({ embeds: [embed] });
+        await interaction.reply({
+          content: `Sorry, this group is already full! You've been added to the reserve list.`,
+          ephemeral: true,
+        });
+      } else {
+        await interaction.reply({
+          content: `Sorry, this group is already full and you're already on the reserve list!`,
+          ephemeral: true,
+        });
+      }
     } else {
       // Remove user from Reserves list if they are on it
       if (reservePlayers.includes(`<@${nickname}>`)) {
@@ -302,7 +311,7 @@ client.on("interactionCreate", async (interaction) => {
         content: `You've been successfully removed from the current players list!`,
         ephemeral: true,
       });
-    } else if (reservePlayersField.value.includes(`<@${nickname}>`)) {
+    } else if (reservePlayers.includes(`<@${nickname}>`)) {
       reservePlayersField.value = reservePlayersField.value.replace(
         `<@${nickname}>`,
         ""
@@ -315,6 +324,18 @@ client.on("interactionCreate", async (interaction) => {
     } else {
       await interaction.reply({
         content: `Your name isn't on any of the lists!`,
+        ephemeral: true,
+      });
+    }
+  }
+
+  if (interaction.customId === "lfgDelete") {
+    if (embedAuthor === interaction.user.username) {
+      // delete the message
+      await message.delete();
+    } else {
+      await interaction.reply({
+        content: `Sorry, only the author of the post can delete it!`,
         ephemeral: true,
       });
     }
