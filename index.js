@@ -183,6 +183,8 @@ client.on("interactionCreate", async (interaction) => {
     await interaction.reply(
       `<@!${mentionedMember.user.id}> has been verified by <@!${interaction.user.id}>.`
     );
+
+    ////////
   }
 
   // Add Role (Mod) for test server
@@ -217,6 +219,74 @@ client.on("interactionCreate", async (interaction) => {
     }
   }
   ///////////////////End Role Interaction
+
+  // LFG Interaction
+  const message = interaction.message;
+  const embed = message.embeds[0];
+  const nickname = interaction.user.id;
+
+  const currentPlayersField = embed.fields.find(
+    (field) => field.name === "Current Players"
+  );
+  const reservePlayersField = embed.fields.find(
+    (field) => field.name === "Reserve Players"
+  );
+
+  if (
+    interaction.customId === "lfgJoin" ||
+    interaction.customId === "lfgReserve"
+  ) {
+    const isJoining = interaction.customId === "lfgJoin";
+    const currentList = isJoining ? currentPlayersField : reservePlayersField;
+    const otherList = isJoining ? reservePlayersField : currentPlayersField;
+    const successMessage = isJoining
+      ? "added to this LFG group"
+      : "added to the reserve players list";
+    const alreadyAddedMessage = isJoining
+      ? "already been added to this LFG group"
+      : "already on the reserve players list";
+
+    if (!currentList.value.includes(`<@${nickname}>`)) {
+      currentList.value += `\n<@${nickname}>`;
+      otherList.value = otherList.value.replace(`<@${nickname}>`, "");
+      await message.edit({ embeds: [embed] });
+      await interaction.reply({
+        content: `You've been successfully ${successMessage}!`,
+        ephemeral: true,
+      });
+    } else {
+      await interaction.reply({
+        content: `You've ${alreadyAddedMessage}!`,
+        ephemeral: true,
+      });
+    }
+  }
+
+  if (interaction.customId === "lfgRemove") {
+    const currentList = currentPlayersField;
+    const reserveList = reservePlayersField;
+
+    if (currentList.value.includes(`<@${nickname}>`)) {
+      currentList.value = currentList.value.replace(`<@${nickname}>`, "");
+      await message.edit({ embeds: [embed] });
+      await interaction.reply({
+        content: `You've been successfully removed from the current players list!`,
+        ephemeral: true,
+      });
+    } else if (reserveList.value.includes(`<@${nickname}>`)) {
+      reserveList.value = reserveList.value.replace(`<@${nickname}>`, "");
+      await message.edit({ embeds: [embed] });
+      await interaction.reply({
+        content: `You've been successfully removed from the reserve players list!`,
+        ephemeral: true,
+      });
+    } else {
+      await interaction.reply({
+        content: `Your name isn't on any of the lists!`,
+        ephemeral: true,
+      });
+    }
+  }
 });
 
 client.on("interactionCreate", async (interaction) => {
