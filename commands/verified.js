@@ -1,5 +1,7 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
+const dotenv = require("dotenv");
+dotenv.config();
 
 // Define the command handler function
 module.exports = {
@@ -34,7 +36,7 @@ module.exports = {
       ephemeral: true,
     });
 
-    const channelId = "1090288377045196820"; // Replace with your channel ID
+    const channelId = process.env.MOD_ID; // Add Mod Channel ID
     const channel = interaction.client.channels.cache.get(channelId);
     if (!channel) return console.error("Channel not found.");
 
