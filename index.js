@@ -329,6 +329,9 @@ client.on("interactionCreate", async (interaction) => {
     }
   }
 
+  const embedAuthor = interaction.message.embeds[0].author.name;
+  console.log(`embedAuthor: ${embedAuthor}, ${interaction.user.username}`);
+
   if (interaction.customId === "lfgDelete") {
     if (embedAuthor === interaction.user.username) {
       // delete the message
