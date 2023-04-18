@@ -8,10 +8,6 @@ const {
   ActivityType,
   ButtonBuilder,
   ButtonStyle,
-  ActionRowBuilder,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
 } = require("discord.js");
 const dotenv = require("dotenv");
 dotenv.config();
@@ -86,73 +82,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isButton()) return; // ignore non-button interactions
 
-  const member = interaction.member;
-
-  // const roles = {
-  //   Hunters: {
-  //     role: member.guild.roles.cache.find((role) => role.name === "Hunters"),
-  //     message: "Cayde would say something funny about now!",
-  //   },
-  //   Titans: {
-  //     role: member.guild.roles.cache.find((role) => role.name === "Titans"),
-  //     message: "Zavala would say indeed!",
-  //   },
-  //   Warlocks: {
-  //     role: member.guild.roles.cache.find((role) => role.name === "Warlocks"),
-  //     message: "Ikora would be proud!",
-  //   },
-  // };
-
-  // switch (interaction.customId) {
-  //   case "addHunter":
-  //     addRole(roles.Hunters.role, roles.Hunters.message);
-  //     removeRoles([roles.Titans.role, roles.Warlocks.role]);
-  //     break;
-  //   case "addTitan":
-  //     addRole(roles.Titans.role, roles.Titans.message);
-  //     removeRoles([roles.Hunters.role, roles.Warlocks.role]);
-  //     break;
-  //   case "addWarlock":
-  //     addRole(roles.Warlocks.role, roles.Warlocks.message);
-  //     removeRoles([roles.Hunters.role, roles.Titans.role]);
-  //     break;
-  //   default:
-  //     console.log("Invalid custom ID");
-  //     break;
-  // }
-
-  // async function addRole(role, message) {
-  //   if (!role) {
-  //     console.log("Role not found!");
-  //     return;
-  //   }
-
-  //   try {
-  //     await member.roles.add(role);
-  //     await interaction.reply({
-  //       content: `${message} Welcome to ${role}`,
-  //       ephemeral: true,
-  //     });
-  //   } catch (error) {
-  //     console.log(error);
-  //     await interaction.reply("Something went wrong while adding the role!");
-  //   }
-  // }
-
-  // async function removeRoles(roles) {
-  //   try {
-  //     await member.roles.remove(roles);
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // }
-
-  // if (interaction.command === "bungie-id") {
-  //   // Your code to execute when the 'verify' command is called goes here
-  //   await interaction.reply("Test");
-  //   console.log("test");
-  // }
-
   // Verified
   if (interaction.customId === "verified") {
     const message = interaction.message;
@@ -162,9 +91,7 @@ client.on("interactionCreate", async (interaction) => {
     );
 
     if (!verifiedRole) return console.error("Role not found.");
-
     const mentionedMember = message.guild.members.cache.get(mentionedUser.id);
-
     if (!mentionedMember) return console.error("Member not found.");
 
     await mentionedMember.roles.add(verifiedRole);
@@ -183,42 +110,9 @@ client.on("interactionCreate", async (interaction) => {
     await interaction.reply(
       `<@!${mentionedMember.user.id}> has been verified by <@!${interaction.user.id}>.`
     );
-
-    ////////
   }
 
-  // // Add Role (Mod) for test server
-  // if (interaction.customId === "addRole") {
-  //   const role = member.guild.roles.cache.find((role) => role.name === "Mod");
-  //   if (!role) return console.log("Role not found!"); // If the role is not found, log a message and return
-  //   try {
-  //     await member.roles.add(role);
-  //     await interaction.reply({
-  //       content: `Role "${role.name}" added!`,
-  //       ephemeral: true,
-  //     }); // Send a confirmation message
-  //   } catch (error) {
-  //     console.log(error);
-  //     await interaction.reply("Something went wrong while adding the role!"); // Send an error message
-  //   }
-  // }
-
-  // // Add Role (Mod) for test server
-  // if (interaction.customId === "removeRole") {
-  //   const role = member.guild.roles.cache.find((role) => role.name === "Mod");
-  //   if (!role) return console.log("Role not found!"); // If the role is not found, log a message and return
-  //   try {
-  //     await member.roles.remove(role);
-  //     await interaction.reply({
-  //       content: `Role "${role.name}" removed!`,
-  //       ephemeral: true,
-  //     }); // Send a confirmation message
-  //   } catch (error) {
-  //     console.log(error);
-  //     await interaction.reply("Something went wrong while adding the role!"); // Send an error message
-  //   }
-  // }
-  // ///////////////////End Role Interaction
+  //////// End Verify
 
   // LFG Interaction
   const message = interaction.message;
