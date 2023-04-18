@@ -116,7 +116,7 @@ module.exports = {
           inline: true,
         },
         {
-          name: "Reserve Players",
+          name: "Backup Players",
           value: " ",
           inline: true,
         },

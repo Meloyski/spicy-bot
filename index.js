@@ -229,7 +229,7 @@ client.on("interactionCreate", async (interaction) => {
     (field) => field.name === "Current Players"
   );
   const reservePlayersField = embed.fields.find(
-    (field) => field.name === "Reserve Players"
+    (field) => field.name === "Backup Players"
   );
 
   const currentPlayers = currentPlayersField.value.match(/<@.*?>/g) || [];
@@ -289,12 +289,12 @@ client.on("interactionCreate", async (interaction) => {
       reservePlayersField.value += `\n<@${nickname}>`;
       await message.edit({ embeds: [embed] });
       await interaction.reply({
-        content: `You've been successfully added to the reserve players list!`,
+        content: `You've been successfully added to the Backup Players list!`,
         ephemeral: true,
       });
     } else {
       await interaction.reply({
-        content: `You're already on the reserve players list!`,
+        content: `You're already on the Backup Players list!`,
         ephemeral: true,
       });
     }
@@ -308,7 +308,7 @@ client.on("interactionCreate", async (interaction) => {
       );
       await message.edit({ embeds: [embed] });
       await interaction.reply({
-        content: `You've been successfully removed from the current players list!`,
+        content: `You've been successfully removed from the Current Players list!`,
         ephemeral: true,
       });
     } else if (reservePlayers.includes(`<@${nickname}>`)) {
@@ -318,7 +318,7 @@ client.on("interactionCreate", async (interaction) => {
       );
       await message.edit({ embeds: [embed] });
       await interaction.reply({
-        content: `You've been successfully removed from the reserve players list!`,
+        content: `You've been successfully removed from the Backup Players list!`,
         ephemeral: true,
       });
     } else {
