@@ -1,4 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const dotenv = require("dotenv");
+dotenv.config();
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -29,7 +31,7 @@ module.exports = {
   async execute(interaction) {
     const { guild, user } = interaction;
     const targetChannel =
-      guild.channels.cache.get("1087784107364331600") ||
+      guild.channels.cache.get(process.env.SUGGESTION_ID) || // Suggestion Box Channel ID
       guild.channels.cache.find((channel) => channel.name === "suggestion-box");
 
     const title = interaction.options.getString("title");

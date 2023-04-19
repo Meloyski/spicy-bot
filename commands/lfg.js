@@ -38,8 +38,52 @@ module.exports = {
             value: "Raid: Root of Nightmares",
           },
           {
+            name: "Raid: Kings Fall",
+            value: "Raid: Kings Fall",
+          },
+          {
+            name: "Raid: Vow of the Disciple",
+            value: "Raid: Vow of the Disciple",
+          },
+          {
+            name: "Raid: Vault of Glass",
+            value: "Raid: Vault of Glass",
+          },
+          {
+            name: "Raid: Deep Stone Crypt",
+            value: "Raid: Deep Stone Crypt",
+          },
+          {
+            name: "Raid: Garden of Salvation",
+            value: "Raid: Garden of Salvation",
+          },
+          {
+            name: "Raid: Last Wish",
+            value: "Raid: Last Wish",
+          },
+          {
             name: "Dungeon: Spire of the Watcher",
             value: "Dungeon: Spire of the Watcher",
+          },
+          {
+            name: "Dungeon: Duality",
+            value: "Dungeon: Duality",
+          },
+          {
+            name: "Dungeon: Grasp of Avarice",
+            value: "Dungeon: Grasp of Avarice",
+          },
+          {
+            name: "Dungeon: Prophecy",
+            value: "Dungeon: Prophecy",
+          },
+          {
+            name: "Dungeon: Pit of Heresy",
+            value: "Dungeon: Pit of Heresy",
+          },
+          {
+            name: "Dungeon: The Shattered Throne",
+            value: "Dungeon: The Shattered Throne",
           },
           { name: "Crucible", value: "Crucible" },
           { name: "Gambit", value: "Gambit" },
@@ -76,7 +120,7 @@ module.exports = {
         .setStyle(ButtonStyle.Success),
 
       new ButtonBuilder()
-        .setCustomId("lfgReserve")
+        .setCustomId("lfgBackup")
         .setLabel(`Backup`)
         .setStyle(ButtonStyle.Primary),
 
@@ -111,13 +155,13 @@ module.exports = {
           inline: true,
         },
         {
-          name: "\u200B",
-          value: "\u200B",
+          name: "Backup Players",
+          value: " ",
           inline: true,
         },
         {
-          name: "Reserve Players",
-          value: " ",
+          name: "\u200B",
+          value: "\u200B",
           inline: true,
         },
         { name: "Start Date/Time", value: time, inline: true }
@@ -134,7 +178,7 @@ module.exports = {
     }
 
     if (channel) {
-      embed.addFields({ name: "Voice", value: channel.name, inline: true });
+      embed.addFields({ name: "Voice", value: channel.name });
     }
 
     interaction.deferReply();

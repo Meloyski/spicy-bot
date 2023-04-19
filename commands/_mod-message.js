@@ -21,7 +21,9 @@ module.exports = {
     .setDefaultMemberPermissions(0),
 
   async execute(interaction) {
-    const message = interaction.options.getString("message");
+    const message = interaction.options
+      .getString("message")
+      .replace(/\\n/g, "\n");
     const messageId = interaction.options.getString("message-id");
 
     if (messageId) {
