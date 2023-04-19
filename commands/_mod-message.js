@@ -18,6 +18,14 @@ module.exports = {
         .setDescription("Is this message a Reply to another member's message?")
         .setRequired(false)
     )
+    .addStringOption((option) =>
+      option
+        .setName("edit-id")
+        .setDescription(
+          "Copy and paste the message-id of the message you want to edit."
+        )
+        .setRequired(false)
+    )
     .setDefaultMemberPermissions(0),
 
   async execute(interaction) {
@@ -25,17 +33,31 @@ module.exports = {
       .getString("message")
       .replace(/\\n/g, "\n");
     const messageId = interaction.options.getString("message-id");
+    const editMessageId = interaction.options.getString("edit-id");
 
-    if (messageId) {
+    if (editMessageId) {
+      try {
+        const channel = interaction.channel;
+        const messageToEdit = await channel.messages.fetch(editMessageId);
+        await messageToEdit.edit(message);
+      } catch (error) {
+        console.error(error);
+        interaction.reply(
+          `Failed to edit the message. Reason: ${error.message}`
+        );
+        return;
+      }
+    } else if (messageId) {
       try {
         const channel = interaction.channel;
         const messageToRespond = await channel.messages.fetch(messageId);
-        messageToRespond.reply(message);
+        await messageToRespond.reply(message);
       } catch (error) {
         console.error(error);
         interaction.reply(
           `Failed to send the message. Reason: ${error.message}`
         );
+        return;
       }
     } else {
       await interaction.channel.send(message);
