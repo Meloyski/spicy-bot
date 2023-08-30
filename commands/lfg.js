@@ -34,6 +34,10 @@ module.exports = {
         .setRequired(true)
         .addChoices(
           {
+            name: "Raid: Crotas End",
+            value: "Raid: Crotas End",
+          },
+          {
             name: "Raid: Root of Nightmares",
             value: "Raid: Root of Nightmares",
           },
@@ -62,6 +66,10 @@ module.exports = {
             value: "Raid: Last Wish",
           },
           {
+            name: "Dungeon: Ghosts of the Deep",
+            value: "Dungeon: Ghosts of the Deep",
+          },
+          {
             name: "Dungeon: Spire of the Watcher",
             value: "Dungeon: Spire of the Watcher",
           },
@@ -85,6 +93,19 @@ module.exports = {
             name: "Dungeon: The Shattered Throne",
             value: "Dungeon: The Shattered Throne",
           },
+          {
+            name: "Nightfalls: Grand Master",
+            value: "Nightfalls: Grand Master",
+          },
+          {
+            name: "Nightfalls",
+            value: "Nightfalls",
+          },
+          {
+            name: "Strikes",
+            value: "Strikes",
+          },
+          { name: "Iron Banner", value: "Iron Banner" },
           { name: "Crucible", value: "Crucible" },
           { name: "Gambit", value: "Gambit" },
           { name: "MISC", value: "MISC" }

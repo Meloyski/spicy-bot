@@ -6,7 +6,7 @@ module.exports = {
     .setDescription("Get the Spicy Ramen Discord Invite link"),
   async execute(interaction) {
     await interaction.reply({
-      content: "https://discord.gg/e6F4cX4XVP",
+      content: "https://discord.gg/7n5w23q",
     });
   },
 };
