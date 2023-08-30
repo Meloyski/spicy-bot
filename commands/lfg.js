@@ -34,6 +34,10 @@ module.exports = {
         .setRequired(true)
         .addChoices(
           {
+            name: "Raid: Crotas End",
+            value: "Raid: Crotas End",
+          },
+          {
             name: "Raid: Root of Nightmares",
             value: "Raid: Root of Nightmares",
           },
@@ -60,6 +64,10 @@ module.exports = {
           {
             name: "Raid: Last Wish",
             value: "Raid: Last Wish",
+          },
+          {
+            name: "Dungeon: Ghosts of the Deep",
+            value: "Dungeon: Ghosts of the Deep",
           },
           {
             name: "Dungeon: Spire of the Watcher",
