@@ -93,6 +93,19 @@ module.exports = {
             name: "Dungeon: The Shattered Throne",
             value: "Dungeon: The Shattered Throne",
           },
+          {
+            name: "Nightfalls: Grand Master",
+            value: "Nightfalls: Grand Master",
+          },
+          {
+            name: "Nightfalls",
+            value: "Nightfalls",
+          },
+          {
+            name: "Strikes",
+            value: "Strikes",
+          },
+          { name: "Iron Banner", value: "Iron Banner" },
           { name: "Crucible", value: "Crucible" },
           { name: "Gambit", value: "Gambit" },
           { name: "MISC", value: "MISC" }
