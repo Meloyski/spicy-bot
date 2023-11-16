@@ -43,12 +43,6 @@ module.exports = {
     .addStringOption((option) =>
       option.setName("chill").setDescription("Chill Rule").setRequired(true)
     )
-    .addStringOption((option) =>
-      option
-        .setName("nickname")
-        .setDescription("Nickname Rule")
-        .setRequired(true)
-    )
     .setDefaultMemberPermissions(0),
   async execute(interaction) {
     const editMessage = interaction.options.getBoolean("edit");
@@ -64,7 +58,6 @@ module.exports = {
     const political = interaction.options.getString("political");
     const spoiler = interaction.options.getString("spoiler");
     const chill = interaction.options.getString("chill");
-    const nickname = interaction.options.getString("nickname");
 
     const bullyEmbed = new EmbedBuilder()
       .setColor(0xec008c)
@@ -101,11 +94,6 @@ module.exports = {
       .setTitle("7. Help keep things chill")
       .setDescription(chill);
 
-    const nicknameEmbed = new EmbedBuilder()
-      .setColor(0xec008c)
-      .setTitle("8. Server nickname")
-      .setDescription(nickname);
-
     interaction.deferReply();
     if (editMessage) {
       const messages = await interaction.channel.messages.fetch({
@@ -124,7 +112,6 @@ module.exports = {
           politicalEmbed,
           spoilerEmbed,
           chillEmbed,
-          nicknameEmbed,
         ],
       });
     } else {
@@ -138,7 +125,6 @@ module.exports = {
           politicalEmbed,
           spoilerEmbed,
           chillEmbed,
-          nicknameEmbed,
         ],
       });
     }
