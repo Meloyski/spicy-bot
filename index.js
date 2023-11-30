@@ -257,13 +257,15 @@ client.on("interactionCreate", async (interaction) => {
     }
   }
 
-  const embedAuthor = interaction.message.embeds[0].author.name;
-  console.log(`embedAuthor: ${embedAuthor}, ${interaction.member.nickname}`);
+  const embedAuthor = interaction.message.embeds[0].author.name.toLowerCase();
+  const username = interaction.user.username.toLowerCase();
+
+  console.log(`embedAuthor: ${embedAuthor}, username: ${username}`);
 
   if (interaction.customId === "lfgDelete") {
-    if (embedAuthor === interaction.member.nickname) {
+    if (embedAuthor === username) {
       // delete the message
-      await message.delete();
+      await interaction.message.delete();
     } else {
       await interaction.reply({
         content: `Sorry, only the author of the post can delete it!`,
