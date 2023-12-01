@@ -66,6 +66,10 @@ module.exports = {
             value: "Raid: Last Wish",
           },
           {
+            name: "Dungeon: Warlord's Ruin",
+            value: "Dungeon: Warlord's Ruin",
+          },
+          {
             name: "Dungeon: Ghosts of the Deep",
             value: "Dungeon: Ghosts of the Deep",
           },
