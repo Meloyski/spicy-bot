@@ -257,13 +257,16 @@ client.on("interactionCreate", async (interaction) => {
     }
   }
 
+  // const embedAuthor = interaction.message.embeds[0].author.name.toLowerCase();
   const embedAuthor = interaction.message.embeds[0].author.name.toLowerCase();
-  const username = interaction.user.username.toLowerCase();
-  
-  console.log(`embedAuthor: ${embedAuthor}, interaction = username: ${username}, nickname: ${nickname}`,);
-  
+  const username = interaction.member.nickname.toLowerCase();
+
+  console.log(
+    `embedAuthor: ${embedAuthor}, interaction = username: ${username}, nickname: ${nickname}`
+  );
+
   if (interaction.customId === "lfgDelete") {
-    if (embedAuthor === nickname) {
+    if (embedAuthor) {
       // delete the message
       await interaction.message.delete();
     } else {
