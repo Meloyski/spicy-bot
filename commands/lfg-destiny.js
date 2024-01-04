@@ -10,9 +10,9 @@ const {
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("lfg")
+    .setName("lfg-destiny")
     .setDescription(
-      "Looking For Gamers, use this command to find new players for a certain activity."
+      "Looking for fellow Guardians? Use this command to find players for certain Destiny activities."
     )
     .addStringOption((option) =>
       option
@@ -171,12 +171,17 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setColor(0xec008c)
-      .setTitle(`LF${lfgMaxPlayers}: ${lfgActivity}`)
+      .setTitle(`LF${lfgMaxPlayers} - ${lfgActivity}`)
       .setAuthor({ name: displayName, iconURL: userAvatar })
       .addFields(
         {
-          name: `Current Players`, //(${currentPlayers}/${lfgMaxPlayers})
+          name: `Current Players         `, //(${currentPlayers}/${lfgMaxPlayers})
           value: " ",
+          inline: true,
+        },
+        {
+          name: " ",
+          value: "  ",
           inline: true,
         },
         {
@@ -187,7 +192,6 @@ module.exports = {
         {
           name: "\u200B",
           value: "\u200B",
-          inline: true,
         },
         { name: "Start Date/Time", value: time, inline: true }
       );
@@ -198,12 +202,12 @@ module.exports = {
 
     if (title) {
       embed.setTitle(
-        `LF${lfgMaxPlayers}: ${lfgActivity} ${title && `- ${title}`}`
+        `LF${lfgMaxPlayers} - ${lfgActivity} ${title && `, ${title}`}`
       );
     }
 
     if (channel) {
-      embed.addFields({ name: "Voice", value: channel.name });
+      embed.addFields({ name: "Voice", value: channel.name, inline: true });
     }
 
     interaction.deferReply();
