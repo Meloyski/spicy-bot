@@ -95,11 +95,6 @@ module.exports = {
           inline: true,
         },
         {
-          name: " ",
-          value: "  ",
-          inline: true,
-        },
-        {
           name: "Backup Players",
           value: " ",
           inline: true,
@@ -108,7 +103,7 @@ module.exports = {
           name: "\u200B",
           value: "\u200B",
         },
-        { name: "Start Date/Time", value: time, inline: true }
+        { name: "Start Date/Time", value: time }
       );
 
     if (lfgActivity) {
@@ -120,7 +115,7 @@ module.exports = {
     }
 
     if (channel) {
-      embed.addFields({ name: "Voice", value: channel.name, inline: true });
+      embed.addFields({ name: "Voice", value: channel.name });
     }
 
     interaction.deferReply();
