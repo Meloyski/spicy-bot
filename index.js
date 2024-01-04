@@ -164,7 +164,11 @@ client.on("interactionCreate", async (interaction) => {
   const reservePlayers = reservePlayersField.value.match(/<@.*?>/g) || [];
 
   if (interaction.customId === "lfgJoin") {
-    const maxPlayers = interaction.message.embeds[0].title[2];
+    const maxNumber = interaction.message.embeds[0].title;
+    const regex = /(\d{1,2})/;
+    const maxPlayersExtract = maxNumber.match(regex);
+    const maxPlayers = maxPlayersExtract[1];
+
     console.log(`currentPlayers: ${currentPlayers}, maxPlayers: ${maxPlayers}`);
 
     if (currentPlayers.length >= maxPlayers) {
@@ -257,9 +261,8 @@ client.on("interactionCreate", async (interaction) => {
     }
   }
 
-  // const embedAuthor = interaction.message.embeds[0].author.name.toLowerCase();
-  const embedAuthor = interaction.message.embeds[0].author.name.toLowerCase();
-  const username = interaction.member.nickname.toLowerCase();
+  const embedAuthor = interaction.message.embeds[0].author.name;
+  const username = interaction.member.displayName;
 
   console.log(
     `embedAuthor: ${embedAuthor}, interaction = username: ${username}, nickname: ${nickname}`
