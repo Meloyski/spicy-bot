@@ -269,7 +269,7 @@ client.on("interactionCreate", async (interaction) => {
   );
 
   if (interaction.customId === "lfgDelete") {
-    if (embedAuthor) {
+    if (embedAuthor === username) {
       // delete the message
       await interaction.message.delete();
     } else {
