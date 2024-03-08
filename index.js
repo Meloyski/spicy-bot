@@ -9,7 +9,7 @@ const {
   ButtonBuilder,
   ButtonStyle,
 } = require("discord.js");
-const { Configuration, OpenAIApi } = require("openai");
+const OpenAI = require("openai");
 const dotenv = require("dotenv");
 dotenv.config();
 
@@ -23,11 +23,16 @@ const client = new Client({
   ],
 });
 
-const openai = new OpenAIApi(
-  new Configuration({
-    apiKey: process.env.AI_TOKEN,
-  })
-);
+// Old OpenAI
+// const openai = new OpenAIApi(
+//   new Configuration({
+//     apiKey: process.env.AI_TOKEN,
+//   })
+// );
+
+const openai = new OpenAI({
+  apiKey: process.env.AI_TOKEN,
+});
 
 client.commands = new Collection();
 
@@ -66,7 +71,7 @@ client.on("messageCreate", async function (message) {
   if (!mentionRegex.test(message.content)) return;
 
   try {
-    const response = await openai.createChatCompletion({
+    const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {
@@ -77,9 +82,10 @@ client.on("messageCreate", async function (message) {
       ],
     });
 
-    const content = response.data.choices[0].message;
+    const content = response.choices[0].message;
     return message.reply(content);
   } catch (err) {
+    console.log(err);
     return message.reply("As an AI robot, I errored out.");
   }
 });
