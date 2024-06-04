@@ -34,83 +34,36 @@ module.exports = {
         .setRequired(true)
         .addChoices(
           {
-            name: "Raid: Crotas End",
-            value: "Raid: Crotas End",
+            name: "Raid",
+            value: "Raid",
           },
           {
-            name: "Raid: Root of Nightmares",
-            value: "Raid: Root of Nightmares",
+            name: "Dungeon",
+            value: "Dungeon",
           },
           {
-            name: "Raid: Kings Fall",
-            value: "Raid: Kings Fall",
+            name: "Onslaught",
+            value: "Onslaught",
           },
           {
-            name: "Raid: Vow of the Disciple",
-            value: "Raid: Vow of the Disciple",
+            name: "Exotic Mission",
+            value: "Exotic Mission",
           },
           {
-            name: "Raid: Vault of Glass",
-            value: "Raid: Vault of Glass",
+            name: "Nightfall",
+            value: "Nightfall",
           },
           {
-            name: "Raid: Deep Stone Crypt",
-            value: "Raid: Deep Stone Crypt",
+            name: "Nightfall: Grand Master",
+            value: "Nightfall: Grand Master",
           },
           {
-            name: "Raid: Garden of Salvation",
-            value: "Raid: Garden of Salvation",
+            name: "Strike",
+            value: "Strike",
           },
-          {
-            name: "Raid: Last Wish",
-            value: "Raid: Last Wish",
-          },
-          {
-            name: "Dungeon: Warlord's Ruin",
-            value: "Dungeon: Warlord's Ruin",
-          },
-          {
-            name: "Dungeon: Ghosts of the Deep",
-            value: "Dungeon: Ghosts of the Deep",
-          },
-          {
-            name: "Dungeon: Spire of the Watcher",
-            value: "Dungeon: Spire of the Watcher",
-          },
-          {
-            name: "Dungeon: Duality",
-            value: "Dungeon: Duality",
-          },
-          {
-            name: "Dungeon: Grasp of Avarice",
-            value: "Dungeon: Grasp of Avarice",
-          },
-          {
-            name: "Dungeon: Prophecy",
-            value: "Dungeon: Prophecy",
-          },
-          {
-            name: "Dungeon: Pit of Heresy",
-            value: "Dungeon: Pit of Heresy",
-          },
-          {
-            name: "Dungeon: The Shattered Throne",
-            value: "Dungeon: The Shattered Throne",
-          },
-          {
-            name: "Nightfalls: Grand Master",
-            value: "Nightfalls: Grand Master",
-          },
-          {
-            name: "Nightfalls",
-            value: "Nightfalls",
-          },
-          {
-            name: "Strikes",
-            value: "Strikes",
-          },
-          { name: "Iron Banner", value: "Iron Banner" },
           { name: "Crucible", value: "Crucible" },
+          { name: "Iron Banner", value: "Iron Banner" },
+          { name: "Trials", value: "Trials" },
           { name: "Gambit", value: "Gambit" },
           { name: "MISC", value: "MISC" }
         )
@@ -197,7 +150,7 @@ module.exports = {
 
     if (title) {
       embed.setTitle(
-        `LF${lfgMaxPlayers} - ${lfgActivity} ${title && `, ${title}`}`
+        `LF${lfgMaxPlayers} - ${lfgActivity}${title && `, ${title}`}`
       );
     }
 
