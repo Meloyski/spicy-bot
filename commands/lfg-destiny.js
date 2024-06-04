@@ -150,7 +150,7 @@ module.exports = {
 
     if (title) {
       embed.setTitle(
-        `LF${lfgMaxPlayers} - ${lfgActivity}${title && `, ${title}`}`
+        `LF${lfgMaxPlayers} - ${lfgActivity}${title && `: ${title}`}`
       );
     }
 
