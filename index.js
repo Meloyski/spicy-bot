@@ -118,6 +118,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
+//User leaves the server
+client.on("guildMemberRemove", (member) => {
+  const channel = member.guild.channels.cache.get(process.env.ADMIN_CHANNEL);
+  if (!channel) return;
+
+  channel.send(`${member.user.tag} has left the server.`);
+});
+
 // Adding the Role Mod Interaction to index.js to maintain usability on Bot restarts
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isButton()) return; // ignore non-button interactions
