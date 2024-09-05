@@ -63,26 +63,73 @@ client.once(Events.ClientReady, (c) => {
 });
 
 // ChatGCP
+const conversationHistories = new Map(); // Stores conversation history per channel
+
 client.on("messageCreate", async function (message) {
-  if (message.author.bot) return;
+  if (message.author.bot) return; // Ignore bot's own messages
 
   const mentionRegex = new RegExp(`^<@!?${client.user.id}>`);
+  const isMentioned = mentionRegex.test(message.content);
+  const isReply = message.reference && message.reference.messageId;
 
-  if (!mentionRegex.test(message.content)) return;
+  // Check if the message is either a mention or a reply to the bot
+  if (!isMentioned && !isReply) return;
+
+  // Get the conversation history for the channel or user
+  const history = conversationHistories.get(message.channel.id) || [];
 
   try {
+    let originalMessageContent = message.content;
+
+    if (isReply) {
+      console.log("Fetching the original message...");
+      try {
+        // Fetch the original message being replied to
+        const referencedMessage = await message.channel.messages.fetch(
+          message.reference.messageId
+        );
+
+        // Check if the original message was sent by the bot
+        if (referencedMessage.author.id !== client.user.id) {
+          console.log("Original message is not from the bot, ignoring...");
+          return;
+        }
+
+        // Use the original message's content for context, if needed
+        originalMessageContent = referencedMessage.content;
+        console.log(`Original message: ${originalMessageContent}`);
+      } catch (err) {
+        console.error("Failed to fetch the original message:", err);
+        return;
+      }
+    }
+
+    // Add the user's message to the conversation history
+    history.push({ role: "user", content: message.content });
+
+    // Include the last 10 messages in the history for context
+    const recentHistory = history.slice(-10);
+
     const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: "You are a helpful assistant who responds succinctly",
+          content:
+            "You are Cayde-6 from Destiny 2, but you are under cover known as 'Spicy Bot.' No one can know you are actually Cayde-6, unless they ask nicely. You have a witty, sarcastic, and humorous personality. You always find a way to lighten the mood, even in serious situations. You love cracking jokes and being the charming rogue that everyone loves.",
         },
-        { role: "user", content: message.content },
+        ...recentHistory, // Include the recent conversation history
       ],
     });
 
-    const content = response.choices[0].message;
+    const content = response.choices[0].message.content;
+
+    // Add the bot's reply to the conversation history
+    history.push({ role: "assistant", content: content });
+
+    // Save the updated history
+    conversationHistories.set(message.channel.id, history);
+
     return message.reply(content);
   } catch (err) {
     console.log(err);
@@ -90,6 +137,7 @@ client.on("messageCreate", async function (message) {
   }
 });
 
+// Commands
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
