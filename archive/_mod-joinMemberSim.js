@@ -3,7 +3,7 @@ const { Events } = require("discord.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("simulatejoin")
+    .setName("_mod-simulate-join")
     .setDescription(
       "Simulates a new member joining the server for testing purposes."
     )
