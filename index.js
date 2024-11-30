@@ -13,6 +13,7 @@ const {
 const OpenAI = require("openai");
 const dotenv = require("dotenv");
 dotenv.config();
+const database = require("./database");
 
 const client = new Client({
   intents: [
@@ -250,17 +251,64 @@ client.on(Events.GuildMemberAdd, async (member) => {
       });
       lastWelcomeTimestamp = currentTime;
     }
+
+    const roleToAssign = "1298628177249435648"; // Replace with the ID of the role you want to assign
+    await member.roles.add(roleToAssign);
   } catch (error) {
     console.error("Failed to send or edit welcome message:", error);
   }
 });
 
 //User leaves the server
+// client.on("guildMemberRemove", (member) => {
+//   const channel = member.guild.channels.cache.get(process.env.ADMIN_CHANNEL);
+//   if (!channel) return;
+
+//   channel.send(`${member.user.tag} has left the server.`);
+// });
+
 client.on("guildMemberRemove", (member) => {
-  const channel = member.guild.channels.cache.get(process.env.ADMIN_CHANNEL);
+  const channel = member.guild.channels.cache.get(process.env.MOD_CHANNEL);
   if (!channel) return;
 
-  channel.send(`${member.user.tag} has left the server.`);
+  // Get roles and filter out @everyone
+  const roles =
+    member.roles.cache
+      .filter((role) => role.name !== "@everyone") // Exclude @everyone
+      .map((role) => `<@&${role.id}>`) // Convert each role to a mention
+      .join(", ") || "None";
+
+  // Format joined timestamp
+  const joinedTimestamp = member.joinedTimestamp
+    ? `<t:${Math.floor(member.joinedTimestamp / 1000)}:F>`
+    : "Unknown";
+
+  // Construct profile URL
+  const profileURL = `https://discord.com/users/${member.user.id}`;
+
+  // Create embed
+  const embed = new EmbedBuilder()
+    .setColor(0xec008c)
+    .setAuthor({
+      name: `${member.user.username}`, // Display username only
+      iconURL: member.user.displayAvatarURL({ dynamic: true }) || null,
+    })
+    .addFields(
+      {
+        name: "Discord Profile",
+        value: `[${member.user.username}](${profileURL})`, // Hyperlink to the user's profile
+        inline: true,
+      },
+      { name: "Roles", value: roles, inline: false },
+      { name: "Joined Server", value: joinedTimestamp, inline: true }
+    )
+    .setTimestamp();
+
+  // Send the embed
+  channel.send(
+    `${member.user.username} has left the server. Here are their details:`
+  );
+  channel.send({ embeds: [embed] });
 });
 
 // Adding the Role Mod Interaction to index.js to maintain usability on Bot restarts
