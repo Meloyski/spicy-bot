@@ -13,7 +13,8 @@ const {
 const OpenAI = require("openai");
 const dotenv = require("dotenv");
 dotenv.config();
-const database = require("./database");
+
+const connection = require("./database");
 
 const client = new Client({
   intents: [
@@ -25,13 +26,41 @@ const client = new Client({
   ],
 });
 
-// Old OpenAI
-// const openai = new OpenAIApi(
-//   new Configuration({
-//     apiKey: process.env.AI_TOKEN,
-//   })
-// );
+const insertUser = (
+  user_id,
+  username,
+  nickname,
+  roles,
+  joined_at,
+  profile_url,
+  bungie_id
+) => {
+  const query = `
+    INSERT INTO user_roles (user_id, username, nickname, roles, joined_at, profile_url, bungie_id) 
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE
+      username = VALUES(username),
+      nickname = VALUES(nickname),
+      roles = VALUES(roles),
+      joined_at = VALUES(joined_at),
+      profile_url = VALUES(profile_url),
+      bungie_id = VALUES(bungie_id)
+  `;
 
+  connection.query(
+    query,
+    [user_id, username, nickname, roles, joined_at, profile_url, bungie_id],
+    (err, results) => {
+      if (err) {
+        console.error("Error inserting/updating user in the database:", err);
+        return;
+      }
+      console.log("User inserted/updated:", user_id);
+    }
+  );
+};
+
+// OpenAI
 const openai = new OpenAI({
   apiKey: process.env.AI_TOKEN,
 });
@@ -62,6 +91,100 @@ client.once(Events.ClientReady, (c) => {
     activities: [{ name: `Send Noods`, type: ActivityType.STREAMING }],
     status: "online",
   });
+
+  // Update User DB on Startup
+  const guild = client.guilds.cache.get(process.env.GUILD_ID);
+  if (!guild) return console.error("Guild not found");
+
+  guild.members
+    .fetch()
+    .then((members) => {
+      members.forEach((member) => {
+        const roles =
+          member.roles.cache
+            .filter((role) => role.name !== "@everyone") // Exclude @everyone role
+            .map((role) => role.id) // Use Role IDs instead of Role Names
+            .join(",") || "None"; // Join Role IDs into a comma-separated string
+
+        const nickname = member.nickname || member.user.username; // Fetch nickname or set to null
+        const bungie_id = null; // Placeholder: fetch Bungie ID if available via Discord API
+
+        // Insert the user's data into the database
+        insertUser(
+          member.user.id,
+          member.user.username,
+          nickname,
+          roles,
+          member.joinedAt,
+          `https://discord.com/users/${member.user.id}`,
+          bungie_id
+        );
+      });
+    })
+    .catch(console.error);
+});
+
+// Update DB when new user is added
+client.on("guildMemberAdd", (member) => {
+  // Collect Role IDs
+  const roleIDs = member.roles.cache
+    .filter((role) => role.name !== "@everyone") // Exclude @everyone
+    .map((role) => role.id) // Get Role IDs
+    .join(","); // Join Role IDs into a comma-separated string
+
+  // Prepare data for database
+  const user_id = member.user.id;
+  const username = member.user.username;
+  const nickname = member.nickname || member.user.username; // Use username if no nickname is set
+  const joined_at = new Date(member.joinedAt).toISOString(); // Convert joinedAt to ISO format
+  const profile_url = `https://discord.com/users/${member.user.id}`;
+  const bungie_id = null; // Placeholder for Bungie ID
+
+  // Insert or update the user's data in the database
+  const query = `
+    INSERT INTO user_roles (user_id, username, nickname, roles, joined_at, profile_url, bungie_id) 
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE
+    username = VALUES(username),
+    nickname = VALUES(nickname),
+    roles = VALUES(roles),
+    joined_at = VALUES(joined_at),
+    profile_url = VALUES(profile_url),
+    bungie_id = VALUES(bungie_id)
+  `;
+  connection.query(
+    query,
+    [user_id, username, nickname, roleIDs, joined_at, profile_url, bungie_id],
+    (err) => {
+      if (err) {
+        console.error("Error saving user to database:", err);
+        return;
+      }
+      console.log(`User ${username} saved to the database.`);
+    }
+  );
+});
+
+// Update DB on Member Update
+client.on("guildMemberUpdate", (oldMember, newMember) => {
+  const nickname = newMember.nickname || member.user.username;
+  const roles =
+    newMember.roles.cache
+      .filter((role) => role.name !== "@everyone")
+      .map((role) => `<@&${role.id}>`)
+      .join(", ") || "None";
+
+  const bungie_id = null; // Placeholder for Bungie ID, if accessible
+
+  insertUser(
+    newMember.user.id,
+    newMember.user.username,
+    nickname,
+    roles,
+    newMember.joinedAt,
+    `https://discord.com/users/${newMember.user.id}`,
+    bungie_id
+  );
 });
 
 // ChatGCP
@@ -259,56 +382,60 @@ client.on(Events.GuildMemberAdd, async (member) => {
   }
 });
 
-//User leaves the server
-// client.on("guildMemberRemove", (member) => {
-//   const channel = member.guild.channels.cache.get(process.env.ADMIN_CHANNEL);
-//   if (!channel) return;
-
-//   channel.send(`${member.user.tag} has left the server.`);
-// });
-
-client.on("guildMemberRemove", (member) => {
+client.on("guildMemberRemove", async (member) => {
   const channel = member.guild.channels.cache.get(process.env.MOD_CHANNEL);
   if (!channel) return;
 
-  // Get roles and filter out @everyone
-  const roles =
-    member.roles.cache
-      .filter((role) => role.name !== "@everyone") // Exclude @everyone
-      .map((role) => `<@&${role.id}>`) // Convert each role to a mention
-      .join(", ") || "None";
+  // Query the database for the user's information
+  const query = "SELECT * FROM user_roles WHERE user_id = ?";
+  connection.query(query, [member.user.id], (err, results) => {
+    if (err) {
+      console.error("Error fetching user data from the database:", err);
+      channel.send(`Error fetching data for ${member.user.username}.`);
+      return;
+    }
 
-  // Format joined timestamp
-  const joinedTimestamp = member.joinedTimestamp
-    ? `<t:${Math.floor(member.joinedTimestamp / 1000)}:F>`
-    : "Unknown";
+    if (results.length === 0) {
+      // If no data found, handle gracefully
+      channel.send(
+        `${member.user.username} has left the server, but no additional information is available.`
+      );
+      return;
+    }
 
-  // Construct profile URL
-  const profileURL = `https://discord.com/users/${member.user.id}`;
+    const userData = results[0];
+    const roleIDs = userData.roles ? userData.roles.split(",") : []; // Split stored role IDs into an array
+    const roleMentions = roleIDs.map((id) => `<@&${id}>`).join(", ") || "None"; // Convert Role IDs to mentions
+    const joinedTimestamp = userData.joined_at
+      ? `<t:${Math.floor(new Date(userData.joined_at).getTime() / 1000)}:F>`
+      : "Unknown";
+    const profileURL =
+      userData.profile_url || `https://discord.com/users/${member.user.id}`;
 
-  // Create embed
-  const embed = new EmbedBuilder()
-    .setColor(0xec008c)
-    .setAuthor({
-      name: `${member.user.username}`, // Display username only
-      iconURL: member.user.displayAvatarURL({ dynamic: true }) || null,
-    })
-    .addFields(
-      {
-        name: "Discord Profile",
-        value: `[${member.user.username}](${profileURL})`, // Hyperlink to the user's profile
-        inline: true,
-      },
-      { name: "Roles", value: roles, inline: false },
-      { name: "Joined Server", value: joinedTimestamp, inline: true }
-    )
-    .setTimestamp();
+    // Create embed with user data
+    const embed = new EmbedBuilder()
+      .setColor(0xec008c)
+      .setAuthor({
+        name: `${member.user.username}`, // Username only
+        iconURL: member.user.displayAvatarURL({ dynamic: true }) || null,
+      })
+      .addFields(
+        {
+          name: "Discord Profile",
+          value: `[${member.user.username}](${profileURL})`, // Hyperlink to the user's profile
+          inline: true,
+        },
+        { name: "Roles", value: roleMentions, inline: false }, // Render role mentions
+        { name: "Joined Server", value: joinedTimestamp, inline: true }
+      )
+      .setTimestamp();
 
-  // Send the embed
-  channel.send(
-    `${member.user.username} has left the server. Here are their details:`
-  );
-  channel.send({ embeds: [embed] });
+    // Send the embed
+    channel.send(
+      `${member.user.username} has left the server. Here are their details:`
+    );
+    channel.send({ embeds: [embed] });
+  });
 });
 
 // Adding the Role Mod Interaction to index.js to maintain usability on Bot restarts
