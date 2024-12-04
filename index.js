@@ -44,7 +44,8 @@ const insertUser = (
       roles = VALUES(roles),
       joined_at = VALUES(joined_at),
       profile_url = VALUES(profile_url),
-      bungie_id = VALUES(bungie_id)
+      bungie_id = bungie_id,
+      bungie_member_id = bungie_member_id
   `;
 
   connection.query(
@@ -55,7 +56,6 @@ const insertUser = (
         console.error("Error inserting/updating user in the database:", err);
         return;
       }
-      console.log("User inserted/updated:", user_id);
     }
   );
 };
@@ -108,6 +108,7 @@ client.once(Events.ClientReady, (c) => {
 
         const nickname = member.nickname || member.user.username; // Fetch nickname or set to null
         const bungie_id = null; // Placeholder: fetch Bungie ID if available via Discord API
+        const bungie_member_id = null; // Placeholder: fetch Bungie ID if available via Discord API
 
         // Insert the user's data into the database
         insertUser(
@@ -117,7 +118,8 @@ client.once(Events.ClientReady, (c) => {
           roles,
           member.joinedAt,
           `https://discord.com/users/${member.user.id}`,
-          bungie_id
+          bungie_id,
+          bungie_member_id
         );
       });
     })
@@ -139,22 +141,33 @@ client.on("guildMemberAdd", (member) => {
   const joined_at = new Date(member.joinedAt).toISOString(); // Convert joinedAt to ISO format
   const profile_url = `https://discord.com/users/${member.user.id}`;
   const bungie_id = null; // Placeholder for Bungie ID
+  const bungie_member_id = null; // Placeholder for Bungie Member ID
 
   // Insert or update the user's data in the database
   const query = `
-    INSERT INTO user_roles (user_id, username, nickname, roles, joined_at, profile_url, bungie_id) 
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-    ON DUPLICATE KEY UPDATE
+  INSERT INTO user_roles (user_id, username, nickname, roles, joined_at, profile_url, bungie_id, bungie_member_id) 
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  ON DUPLICATE KEY UPDATE
     username = VALUES(username),
     nickname = VALUES(nickname),
     roles = VALUES(roles),
     joined_at = VALUES(joined_at),
     profile_url = VALUES(profile_url),
-    bungie_id = VALUES(bungie_id)
-  `;
+    bungie_id = VALUES(bungie_id),
+    bungie_member_id = VALUES(bungie_member_id)
+`;
   connection.query(
     query,
-    [user_id, username, nickname, roleIDs, joined_at, profile_url, bungie_id],
+    [
+      user_id,
+      username,
+      nickname,
+      roleIDs,
+      joined_at,
+      profile_url,
+      bungie_id,
+      bungie_member_id,
+    ],
     (err) => {
       if (err) {
         console.error("Error saving user to database:", err);
@@ -167,14 +180,16 @@ client.on("guildMemberAdd", (member) => {
 
 // Update DB on Member Update
 client.on("guildMemberUpdate", (oldMember, newMember) => {
-  const nickname = newMember.nickname || member.user.username;
+  const nickname = newMember.nickname || newMember.user.username;
+  // console.log(nickname);
   const roles =
     newMember.roles.cache
       .filter((role) => role.name !== "@everyone")
-      .map((role) => `<@&${role.id}>`)
+      .map((role) => role.id)
       .join(", ") || "None";
 
-  const bungie_id = null; // Placeholder for Bungie ID, if accessible
+  const bungie_id = null;
+  const bungie_member_id = null;
 
   insertUser(
     newMember.user.id,
@@ -183,7 +198,8 @@ client.on("guildMemberUpdate", (oldMember, newMember) => {
     roles,
     newMember.joinedAt,
     `https://discord.com/users/${newMember.user.id}`,
-    bungie_id
+    bungie_id,
+    bungie_member_id
   );
 });
 
@@ -375,7 +391,7 @@ client.on(Events.GuildMemberAdd, async (member) => {
       lastWelcomeTimestamp = currentTime;
     }
 
-    const roleToAssign = "1298628177249435648"; // Replace with the ID of the role you want to assign
+    const roleToAssign = "1298628177249435648";
     await member.roles.add(roleToAssign);
   } catch (error) {
     console.error("Failed to send or edit welcome message:", error);
