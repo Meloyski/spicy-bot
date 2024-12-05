@@ -402,93 +402,62 @@ client.on("guildMemberRemove", async (member) => {
   const channel = member.guild.channels.cache.get(process.env.MOD_CHANNEL);
   if (!channel) return;
 
-  // Query the database for the user's information
-  const query = "SELECT * FROM user_roles WHERE user_id = ?";
-  connection.query(query, [member.user.id], (err, results) => {
-    if (err) {
-      console.error("Error fetching user data from the database:", err);
-      channel.send(`Error fetching data for ${member.user.username}.`);
-      return;
-    }
+  try {
+    // Fetch user data from the database
+    const query = "SELECT * FROM user_roles WHERE user_id = ?";
+    connection.query(query, [member.user.id], (err, results) => {
+      if (err) {
+        console.error("Error fetching user data:", err);
+        channel.send(`Error fetching data for ${member.user.username}.`);
+        return;
+      }
 
-    if (results.length === 0) {
-      // If no data found, handle gracefully
-      channel.send(
-        `${member.user.username} has left the server, but no additional information is available.`
-      );
-      return;
-    }
+      if (results.length === 0) {
+        channel.send(
+          `${member.user.username} has left the server, but no additional information is available.`
+        );
+        return;
+      }
 
-    const userData = results[0];
-    const roleIDs = userData.roles ? userData.roles.split(",") : []; // Split stored role IDs into an array
-    const roleMentions = roleIDs.map((id) => `<@&${id}>`).join(", ") || "None"; // Convert Role IDs to mentions
-    const joinedTimestamp = userData.joined_at
-      ? `<t:${Math.floor(new Date(userData.joined_at).getTime() / 1000)}:F>`
-      : "Unknown";
-    const profileURL =
-      userData.profile_url || `https://discord.com/users/${member.user.id}`;
+      const userData = results[0];
+      const roleIDs = userData.roles ? userData.roles.split(",") : [];
+      const roleMentions =
+        roleIDs.map((id) => `<@&${id}>`).join(", ") || "None";
+      const joinedTimestamp = userData.joined_at
+        ? `<t:${Math.floor(new Date(userData.joined_at).getTime() / 1000)}:F>`
+        : "Unknown";
 
-    // Create embed with user data
-    const embed = new EmbedBuilder()
-      .setColor(0xec008c)
-      .setAuthor({
-        name: `${member.user.username}`, // Username only
-        iconURL: member.user.displayAvatarURL({ dynamic: true }) || null,
-      })
-      .addFields(
-        {
-          name: "Discord Profile",
-          value: `[${member.user.username}](${profileURL})`, // Hyperlink to the user's profile
-          inline: true,
-        },
-        { name: "Roles", value: roleMentions, inline: false }, // Render role mentions
-        { name: "Joined Server", value: joinedTimestamp, inline: true }
-      )
-      .setTimestamp();
+      const embed = new EmbedBuilder()
+        .setColor(0xec008c)
+        .setAuthor({
+          name: member.user.username,
+          iconURL: member.user.displayAvatarURL({ dynamic: true }),
+        })
+        .addFields(
+          { name: "Roles", value: roleMentions, inline: false },
+          { name: "Joined Server", value: joinedTimestamp, inline: true }
+        )
+        .setTimestamp();
 
-    // Send the embed
-    channel.send(
-      `${member.user.username} has left the server. Here are their details:`
-    );
-    channel.send({ embeds: [embed] });
-  });
+      // Send the embed
+      channel.send({
+        content: `${member.user.username} has left the server.`,
+        embeds: [embed],
+      });
+
+      // Optionally, clean up their data from the database
+      const deleteQuery = "DELETE FROM user_roles WHERE user_id = ?";
+      connection.query(deleteQuery, [member.user.id], (deleteErr) => {
+        if (deleteErr) console.error("Error deleting user data:", deleteErr);
+      });
+    });
+  } catch (err) {
+    console.error("Error handling guildMemberRemove:", err);
+  }
 });
 
-// Adding the Role Mod Interaction to index.js to maintain usability on Bot restarts
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isButton()) return; // ignore non-button interactions
-
-  // Verified
-  if (interaction.customId === "verified") {
-    const message = interaction.message;
-    const mentionedUser = message.mentions.users.first();
-    const verifiedRole = message.guild.roles.cache.find(
-      (role) => role.name === "Verified"
-    );
-
-    if (!verifiedRole) return console.error("Role not found.");
-    const mentionedMember = message.guild.members.cache.get(mentionedUser.id);
-    if (!mentionedMember) return console.error("Member not found.");
-
-    await mentionedMember.roles.add(verifiedRole);
-
-    // Disable the button
-    const verifiedButton = new ButtonBuilder()
-      .setCustomId("verified")
-      .setLabel("Already Verified")
-      .setStyle(ButtonStyle.Success)
-      .setDisabled(true);
-
-    message.components[0].components[0] = verifiedButton;
-
-    await message.edit({ components: message.components });
-
-    await interaction.reply(
-      `<@!${mentionedMember.user.id}> has been verified by <@!${interaction.user.id}>.`
-    );
-  }
-
-  //////// End Verify
 
   // LFG Interaction
   const message = interaction.message;
