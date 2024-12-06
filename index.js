@@ -14,7 +14,11 @@ const OpenAI = require("openai");
 const dotenv = require("dotenv");
 dotenv.config();
 
+const db = require("./database");
+
 const connection = require("./database");
+const axios = require("axios");
+const BUNGIE_API_KEY = process.env.BUNGIE_API_KEY;
 
 const client = new Client({
   intents: [
@@ -26,6 +30,15 @@ const client = new Client({
   ],
 });
 
+setInterval(async () => {
+  try {
+    await db.query("SELECT 1"); // Ping the database to keep the connection alive
+    console.log(`[DB KEEP-ALIVE] Connection is active.`);
+  } catch (error) {
+    console.error(`[DB KEEP-ALIVE ERROR]`, error);
+  }
+}, 300000);
+
 const insertUser = (
   user_id,
   username,
@@ -33,10 +46,11 @@ const insertUser = (
   roles,
   joined_at,
   profile_url,
-  bungie_id
+  bungie_id,
+  bungie_member_id
 ) => {
   const query = `
-    INSERT INTO user_roles (user_id, username, nickname, roles, joined_at, profile_url, bungie_id) 
+    INSERT INTO user_roles (user_id, username, nickname, roles, joined_at, profile_url, bungie_id)
     VALUES (?, ?, ?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE
       username = VALUES(username),
@@ -50,7 +64,16 @@ const insertUser = (
 
   connection.query(
     query,
-    [user_id, username, nickname, roles, joined_at, profile_url, bungie_id],
+    [
+      user_id,
+      username,
+      nickname,
+      roles,
+      joined_at,
+      profile_url,
+      bungie_id,
+      bungie_member_id,
+    ],
     (err, results) => {
       if (err) {
         console.error("Error inserting/updating user in the database:", err);
@@ -145,7 +168,7 @@ client.on("guildMemberAdd", (member) => {
 
   // Insert or update the user's data in the database
   const query = `
-  INSERT INTO user_roles (user_id, username, nickname, roles, joined_at, profile_url, bungie_id, bungie_member_id) 
+  INSERT INTO user_roles (user_id, username, nickname, roles, joined_at, profile_url, bungie_id, bungie_member_id)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   ON DUPLICATE KEY UPDATE
     username = VALUES(username),
