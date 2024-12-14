@@ -14,21 +14,32 @@ module.exports = {
     )
     .setDefaultMemberPermissions(0),
   async execute(interaction) {
+    console.log("Command executed: /simulateleave");
+
     const user = interaction.options.getUser("user") || interaction.user;
+    console.log(`User resolved: ${user.username} (${user.id})`);
+
     const member = interaction.guild.members.cache.get(user.id);
+    console.log(
+      member
+        ? `Member found in guild: ${member.user.username} (${member.id})`
+        : "Member not found in guild."
+    );
 
     if (!member) {
+      console.log("Replying with: Member not found in the server.");
       return interaction.reply({
         content: "Member not found in the server.",
         ephemeral: true,
       });
     }
 
-    // Emit the guildMemberRemove event
+    console.log("Emitting 'guildMemberRemove' event...");
     interaction.client.emit("guildMemberRemove", member);
 
+    console.log(`Replying with: Simulated ${user.usename} leaving the server.`);
     await interaction.reply({
-      content: `Simulated ${user.tag} leaving the server.`,
+      content: `Simulated ${user.username} leaving the server.`,
       ephemeral: true,
     });
   },

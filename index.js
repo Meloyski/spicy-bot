@@ -15,6 +15,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const db = require("./database");
+const promisePool = require("./database");
 
 const connection = require("./database");
 const axios = require("axios");
@@ -434,59 +435,89 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
+// When users leaves the server
 client.on("guildMemberRemove", async (member) => {
   const channel = member.guild.channels.cache.get(process.env.MOD_CHANNEL);
   if (!channel) return;
 
   try {
-    // Fetch user data from the database
-    const query = "SELECT * FROM user_roles WHERE user_id = ?";
-    connection.query(query, [member.user.id], (err, results) => {
-      if (err) {
-        console.error("Error fetching user data:", err);
-        channel.send(`Error fetching data for ${member.user.username}.`);
-        return;
-      }
+    // Query the database for the user who left the server
+    const [userResults] = await promisePool.query(
+      "SELECT * FROM user_roles WHERE user_id = ?",
+      [member.id]
+    );
 
-      if (results.length === 0) {
-        channel.send(
-          `${member.user.username} has left the server, but no additional information is available.`
-        );
-        return;
-      }
+    // If a row exists for the user, log their information
+    if (userResults.length > 0) {
+      const user = userResults[0]; // Assuming the user exists in the DB
 
-      const userData = results[0];
-      const roleIDs = userData.roles ? userData.roles.split(",") : [];
-      const roleMentions =
-        roleIDs.map((id) => `<@&${id}>`).join(", ") || "None";
-      const joinedTimestamp = userData.joined_at
-        ? `<t:${Math.floor(new Date(userData.joined_at).getTime() / 1000)}:F>`
-        : "Unknown";
+      const userInfo = `
+        **Username**: ${user.username}
+        **Nickname**: ${user.nickname || "N/A"}
+        **Bungie ID**: ${user.bungie_id}
+        **Bungie Member ID**: ${user.bungie_member_id}
+        **Roles**: ${user.roles}
+        **Joined At**: ${user.joined_at}
+        **Profile URL**: ${user.profile_url}
+      `;
+
+      //Bungie Profile URL
+      const bungieProfileURL =
+        user.bungie_member_id === "'unknown'"
+          ? "NA"
+          : `https://www.bungie.net/7/en/User/Profile/1/${user.bungie_member_id}`;
+
+      // User Roles Mapped
+      const userRoles = user.roles ? user.roles.split(",") : [];
+      const userRolesDisplay =
+        userRoles.map((id) => `<@&${id}>`).join(", ") || "None";
+
+      // Date Formatting
+      const formatDate = (date) => {
+        const options = {
+          weekday: "short", // Mon
+          day: "2-digit", // 01
+          month: "short", // Jan
+          year: "numeric", // 2024
+          hour: "2-digit", // 12
+          minute: "2-digit", // 00
+          hour12: true, // AM/PM
+        };
+
+        return new Intl.DateTimeFormat("en-US", options).format(new Date(date));
+      };
+      const joinedAt = user.joined_at ? formatDate(user.joined_at) : "N/A";
 
       const embed = new EmbedBuilder()
         .setColor(0xec008c)
         .setAuthor({
-          name: member.user.username,
+          name: user.nickname,
           iconURL: member.user.displayAvatarURL({ dynamic: true }),
         })
         .addFields(
-          { name: "Roles", value: roleMentions, inline: false },
-          { name: "Joined Server", value: joinedTimestamp, inline: true }
+          {
+            name: "Discord Profile",
+            value: `[@${user.nickname}](${user.profile_url})`,
+            inline: false,
+          },
+          {
+            name: "Bungie Profile",
+            value: bungieProfileURL,
+            inline: false,
+          },
+          { name: "Roles", value: userRolesDisplay, inline: false },
+          { name: "Joined Server", value: joinedAt, inline: true }
         )
         .setTimestamp();
 
       // Send the embed
       channel.send({
-        content: `${member.user.username} has left the server.`,
+        content: `${user.nickname} has left the server.`,
         embeds: [embed],
       });
-
-      // Optionally, clean up their data from the database
-      const deleteQuery = "DELETE FROM user_roles WHERE user_id = ?";
-      connection.query(deleteQuery, [member.user.id], (deleteErr) => {
-        if (deleteErr) console.error("Error deleting user data:", deleteErr);
-      });
-    });
+    } else {
+      channel.send(`A user with ID ${user.nickname} left, but no data found.`);
+    }
   } catch (err) {
     console.error("Error handling guildMemberRemove:", err);
   }
