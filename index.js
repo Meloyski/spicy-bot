@@ -149,36 +149,43 @@ client.once(Events.ClientReady, (c) => {
     .catch(console.error);
 });
 
-// Update DB when new user is added
-client.on("guildMemberAdd", (member) => {
-  // Collect Role IDs
-  const roleIDs = member.roles.cache
-    .filter((role) => role.name !== "@everyone") // Exclude @everyone
-    .map((role) => role.id) // Get Role IDs
-    .join(","); // Join Role IDs into a comma-separated string
+// User enters the server
+let lastWelcomeMessage; // Store the last welcome message object
+let lastWelcomeTimestamp = 0; // Store the timestamp when the last message was sent
+const WELCOME_TIMEOUT = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
 
-  // Prepare data for database
+client.on(Events.GuildMemberAdd, async (member) => {
+  // DB Handling
+  const roleIDs = member.roles.cache
+    .filter((role) => role.name !== "@everyone")
+    .map((role) => role.id)
+    .join(",");
+
   const user_id = member.user.id;
   const username = member.user.username;
-  const nickname = member.nickname || member.user.username; // Use username if no nickname is set
-  const joined_at = new Date(member.joinedAt).toISOString(); // Convert joinedAt to ISO format
+  const nickname = member.nickname || member.user.username;
+  // const joined_at = new Date(member.joinedAt).toISOString();
+  const joined_at = new Date(member.joinedAt)
+    .toISOString()
+    .slice(0, 19)
+    .replace("T", " ");
   const profile_url = `https://discord.com/users/${member.user.id}`;
-  const bungie_id = null; // Placeholder for Bungie ID
-  const bungie_member_id = null; // Placeholder for Bungie Member ID
+  const bungie_id = null;
+  const bungie_member_id = null;
 
-  // Insert or update the user's data in the database
   const query = `
-  INSERT INTO user_roles (user_id, username, nickname, roles, joined_at, profile_url, bungie_id, bungie_member_id)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  ON DUPLICATE KEY UPDATE
-    username = VALUES(username),
-    nickname = VALUES(nickname),
-    roles = VALUES(roles),
-    joined_at = VALUES(joined_at),
-    profile_url = VALUES(profile_url),
-    bungie_id = VALUES(bungie_id),
-    bungie_member_id = VALUES(bungie_member_id)
-`;
+    INSERT INTO user_roles (user_id, username, nickname, roles, joined_at, profile_url, bungie_id, bungie_member_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE
+      username = VALUES(username),
+      nickname = VALUES(nickname),
+      roles = VALUES(roles),
+      joined_at = VALUES(joined_at),
+      profile_url = VALUES(profile_url),
+      bungie_id = VALUES(bungie_id),
+      bungie_member_id = VALUES(bungie_member_id)
+  `;
+
   connection.query(
     query,
     [
@@ -194,11 +201,108 @@ client.on("guildMemberAdd", (member) => {
     (err) => {
       if (err) {
         console.error("Error saving user to database:", err);
-        return;
+      } else {
+        console.log(`User ${username} saved to the database.`);
       }
-      console.log(`User ${username} saved to the database.`);
     }
   );
+
+  // Welcome Message and Role Assignment
+  try {
+    const channel = member.guild.channels.cache.get(process.env.LOBBY_CHANNEL);
+
+    if (!channel) {
+      console.error(`Lobby channel not found: ${process.env.LOBBY_CHANNEL}`);
+      return;
+    }
+
+    const currentTime = Date.now();
+
+    if (
+      lastWelcomeMessage &&
+      currentTime - lastWelcomeTimestamp < WELCOME_TIMEOUT
+    ) {
+      const newContent = `<@${member.id}> ${lastWelcomeMessage.content}`;
+      await lastWelcomeMessage.edit({ content: newContent });
+    } else {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are Cayde-6 from Destiny 2, but you are undercover known as 'Spicy Bot.' No one can know you are actually Cayde-6 unless they ask nicely. You have a witty, sarcastic, and humorous personality.",
+          },
+          {
+            role: "user",
+            content: `A new member has joined. Write a witty and humorous welcome message. Don't call them out by name and don't use emojis.`,
+          },
+        ],
+        max_tokens: 70,
+        stop: [".", "\n"],
+        temperature: 0.5,
+      });
+
+      const randomWelcomeMessage = response.choices[0].message.content;
+      const userMention = `<@${member.id}>`;
+      const staticMessage =
+        "I’m the Spicy Bot! Feel free to ask me anything — just tag me like this: `@Spicy Bot`, add your message, and hit send!";
+
+      const modMention = `<@&${process.env.MOD}>`;
+      const sherpaMention = `<@&${process.env.SHERPA}>`;
+      const poblanoMention = `<@&${process.env.POBLANO}>`;
+      const spicyFamilyMention = `<@&${process.env.SPICYFAMILY}>`;
+
+      const embedBungieLink = new EmbedBuilder()
+        .setColor(0xec008c)
+        .setTitle("Link your BungieID to your Account")
+        .setDescription(
+          `All SRH members must link their Bungie ID to Discord. This validates your  membership and will replace your ${poblanoMention} role with ${spicyFamilyMention}, granting full server access.`
+        )
+        .addFields(
+          {
+            name: "Get Your Bungie ID",
+            value: `Go to Bungie.net and grab your Bungie ID from your [Bungie Profile](https://www.bungie.net/7/en/User/Profile). Your Bungie ID consists of Username#0000.`,
+          },
+          {
+            name: "Link Your Bungie ID",
+            value:
+              "Go to our [#destiny-chat](https://discord.com/channels/558700711647641630/585863497385115670) channel, type `/` to see a link of commands. Choose `/bungie-link` and paste your Bungie ID and submit. Spicy Bot will verify that your Bungie ID is correct and assign it to your Server Profile.",
+          }
+        );
+
+      const embedResources = new EmbedBuilder()
+        .setColor(0xec008c)
+        .setTitle("SRH Resources")
+        .addFields({
+          name: "Links",
+          value: `- [SRH Rules](https://discord.com/channels/558700711647641630/1086001552969441350) — Contact a ${modMention} with any questions.\n- [SRH Clan Invite](https://www.bungie.net/en/ClanV2/Chat?groupId=291803) — Reach out to a ${modMention}.\n- Need help? — Tag a ${sherpaMention}.\n\n`,
+        });
+
+      const embedCommands = new EmbedBuilder()
+        .setColor(0xec008c)
+        .setTitle("Spicy Bot Commands")
+        .setDescription(
+          "To use a Spicy Bot command, type `/` in your Message Input, to show available Commands for a specific channel."
+        )
+        .addFields({
+          name: "Commands",
+          value: `- \`/bungie-link\`, to update your Bungie ID in our database if you ever change your Destiny username.\n- \`/lfg-destiny\`, to post a LFG to [Destiny LFG](https://discord.com/channels/558700711647641630/1087744773332406403).\n- \`/lfg-general\`, to post a LFG to [General LFG](https://discord.com/channels/558700711647641630/1192471273998135336).\n- \`/suggestion\`, to add a server suggestion to the [Suggestion Box](https://discord.com/channels/558700711647641630/1097995676106895470) channel.\n- \`/invite\`, to invite your friends.`,
+        })
+        .setFooter({ text: "Love, Spicy 💜" });
+
+      lastWelcomeMessage = await channel.send({
+        content: `${userMention} — ${randomWelcomeMessage}. \n\n${staticMessage}`,
+        embeds: [embedBungieLink, embedResources, embedCommands],
+      });
+      lastWelcomeTimestamp = currentTime;
+    }
+
+    const roleToAssign = process.env.POBLANO;
+    await member.roles.add(roleToAssign);
+  } catch (error) {
+    console.error("Failed to send or edit welcome message:", error);
+  }
 });
 
 // Update DB on Member Update
@@ -327,97 +431,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
         ephemeral: true,
       });
     }
-  }
-});
-
-// User enters the server
-let lastWelcomeMessage; // Store the last welcome message object
-let lastWelcomeTimestamp = 0; // Store the timestamp when the last message was sent
-const WELCOME_TIMEOUT = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
-
-client.on(Events.GuildMemberAdd, async (member) => {
-  try {
-    const channel = member.guild.channels.cache.get(process.env.LOBBY_CHANNEL);
-
-    if (!channel) {
-      console.error(`Lounge channel not found: ${process.env.LOBBY_CHANNEL}`);
-      return;
-    }
-
-    const currentTime = Date.now();
-
-    // Check if the last welcome message was sent within the last 6 hours
-    if (
-      lastWelcomeMessage &&
-      currentTime - lastWelcomeTimestamp < WELCOME_TIMEOUT
-    ) {
-      // Add the new user's mention to the existing message
-      const newContent = `<@${member.id}> ${lastWelcomeMessage.content}`;
-      await lastWelcomeMessage.edit({
-        content: newContent,
-      });
-    } else {
-      // Generate a new welcome message if more than 6 hours have passed or no message exists
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are Cayde-6 from Destiny 2, but you are undercover known as 'Spicy Bot.' No one can know you are actually Cayde-6 unless they ask nicely. You have a witty, sarcastic, and humorous personality. You always find a way to lighten the mood, even in serious situations. You love cracking jokes and being the charming rogue that everyone loves.",
-          },
-          {
-            role: "user",
-            content: `A new member has joined. Write a witty and humorous welcome message. You don't need to call them out by name. Don't use emojis.`,
-          },
-        ],
-        max_tokens: 70,
-        stop: [".", "\n"],
-        temperature: 0.5,
-      });
-
-      const randomWelcomeMessage = response.choices[0].message.content;
-      const userMention = `<@${member.id}>`;
-      const staticMessage =
-        "I’m the Spicy Bot! Feel free to ask me anything — just tag me like this: `@Spicy Bot`, add your message, and hit send!";
-
-      const modRole = "585861532798156810";
-      const modMention = `<@&${modRole}>`;
-
-      const sherpaRole = "1121098728330235964";
-      const sherpaMention = `<@&${sherpaRole}>`;
-
-      // Create an embed for the static message
-      const embedSpicy = new EmbedBuilder()
-        .setColor(0xec008c)
-        .setTitle("Additional Resources & Commands\n\n")
-        .addFields(
-          {
-            name: "SRH Resources",
-            value: `- [SRH Rules](https://discord.com/channels/558700711647641630/1086001552969441350) — Contact a ${modMention} with any questions or concerns.\n- [SRH Clan Invite](https://www.bungie.net/en/ClanV2/Chat?groupId=291803) — Reach out to one of our ${modMention} to get the in-game Clan invite. \n- Need help? — Tag a ${sherpaMention} to get in-game help.\n- Use our LFG! — Check out our [Destiny LFG](https://discord.com/channels/558700711647641630/1087744773332406403) and [General Gaming LFG](https://discord.com/channels/558700711647641630/1192471273998135336) channels.\n- Customize your server experience — Check out the 'Channels & Roles' at the top of your server menu.\n\n `,
-          },
-          {
-            name: "Spicy Bot Commands",
-            value:
-              "To use a command, type `/`, select a command, then follow the prompts.\n- `/lfg-destiny`, to post a LFG to [Destiny LFG](https://discord.com/channels/558700711647641630/1087744773332406403).\n- `/lfg-general`, to post a LFG to [General LFG](https://discord.com/channels/558700711647641630/1192471273998135336).\n- `/suggestion`, to add a server suggestion to the [Suggestion Box](https://discord.com/channels/558700711647641630/1097995676106895470) channel.\n- `/invite`, invite your friends.\n\n",
-          }
-        )
-        .setFooter({
-          text: "Love,\n- Spicy 💜",
-        });
-
-      // Send the new welcome message and store the message object and timestamp
-      lastWelcomeMessage = await channel.send({
-        content: `${userMention} — ${randomWelcomeMessage}. \n\n${staticMessage}`,
-        embeds: [embedSpicy],
-      });
-      lastWelcomeTimestamp = currentTime;
-    }
-
-    const roleToAssign = "1298628177249435648";
-    await member.roles.add(roleToAssign);
-  } catch (error) {
-    console.error("Failed to send or edit welcome message:", error);
   }
 });
 
