@@ -334,6 +334,24 @@ client.on("guildMemberUpdate", (oldMember, newMember) => {
 // ChatGCP
 const conversationHistories = new Map(); // Stores conversation history per channel
 
+async function queryWithRetry(sql, params, retries = 3) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const [rows] = await db.query(sql, params); // Using db.query, which is promise-based
+      return rows; // Return the query result rows
+    } catch (error) {
+      if (attempt < retries) {
+        console.warn(
+          `[DB RETRY] Query failed on attempt ${attempt}, retrying...`
+        );
+      } else {
+        console.error(`[DB ERROR] Query failed after ${retries} attempts.`);
+        throw error;
+      }
+    }
+  }
+}
+
 client.on("messageCreate", async function (message) {
   if (message.author.bot) return; // Ignore bot's own messages
 
@@ -398,6 +416,23 @@ client.on("messageCreate", async function (message) {
 
     // Save the updated history
     conversationHistories.set(message.channel.id, history);
+
+    // Log command usage in the database
+    const commandType = "assistant";
+    const userId = message.author.id;
+
+    try {
+      await queryWithRetry(
+        `
+        INSERT INTO spicy_usage (command_type, command_timestamp, command_by)
+        VALUES (?, NOW(), ?);
+        `,
+        [commandType, userId]
+      );
+      console.log(`[DB LOG] Command usage logged in spicy_usage table.`);
+    } catch (error) {
+      console.error(`[DB ERROR] Failed to log command usage:`, error);
+    }
 
     return message.reply(content);
   } catch (err) {

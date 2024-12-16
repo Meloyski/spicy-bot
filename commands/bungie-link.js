@@ -111,11 +111,22 @@
 //           existingData[0].bungie_id !== bungieId ||
 //           existingData[0].bungie_member_id !== membershipId;
 
-//         const member = interaction.member;
-//         const poblanoRole = interaction.guild.roles.fetch(process.env.POBLANO);
-//         const spicyFamilyRole = interaction.guild.roles.fetch(
+//         // Fetch roles
+//         const poblanoRole = await interaction.guild.roles.fetch(
+//           process.env.POBLANO
+//         );
+//         const spicyFamilyRole = await interaction.guild.roles.fetch(
 //           process.env.SPICYFAMILY
 //         );
+
+//         if (!poblanoRole || !spicyFamilyRole) {
+//           console.error("[ERROR] One or both roles could not be fetched.");
+//           await interaction.editReply({
+//             content:
+//               "An error occurred: Unable to fetch required roles. Please contact @Mod for assistance.",
+//           });
+//           return;
+//         }
 
 //         if (hasChanges) {
 //           console.log(`[STEP 5] Updating or inserting user data.`);
@@ -136,15 +147,19 @@
 //           await interaction.editReply({
 //             content: `✅ Your Bungie ID and Membership ID have been successfully updated.\n\n**Bungie ID:** ${bungieId}\n**Membership ID:** ${membershipId}`,
 //           });
-//           await member.roles.remove(poblanoRole);
-//           await member.roles.add(spicyFamilyRole);
+
+//           // Update roles
+//           await interaction.member.roles.remove(poblanoRole);
+//           await interaction.member.roles.add(spicyFamilyRole);
 //         } else {
 //           console.log(`[NO CHANGES] User data already up to date.`);
 //           await interaction.editReply({
 //             content: "Your Bungie ID and Membership ID are already up to date.",
 //           });
-//           await member.roles.remove(poblanoRole);
-//           await member.roles.add(spicyFamilyRole);
+
+//           // Update roles
+//           await interaction.member.roles.remove(poblanoRole);
+//           await interaction.member.roles.add(spicyFamilyRole);
 //         }
 //       } else {
 //         console.log(`[API FAILURE] No player found for Bungie ID.`);
@@ -205,8 +220,24 @@ module.exports = {
     const bungieId = interaction.options.getString("bungieid");
     const apiKey = process.env.BUNGIE_API_KEY;
     const userId = interaction.user.id; // Discord user ID
+    const commandType = "bungie-link"; // Name of the command
 
     console.log(`[USER INPUT] Bungie ID: ${bungieId}`);
+
+    // Log command usage in spicy_usage table
+    try {
+      await queryWithRetry(
+        db,
+        `
+      INSERT INTO spicy_usage (command_type, command_timestamp, command_by)
+      VALUES (?, NOW(), ?);
+    `,
+        [commandType, userId]
+      );
+      console.log(`[DB LOG] Command usage logged in spicy_usage table.`);
+    } catch (error) {
+      console.error(`[DB ERROR] Failed to log command usage:`, error);
+    }
 
     // Validate the Bungie ID
     const bungieIdPattern = /^.+#\d{4,}$/; // Matches any name + # + at least 4 digits
@@ -298,13 +329,13 @@ module.exports = {
           await queryWithRetry(
             db,
             `
-            INSERT INTO user_roles (user_id, username, bungie_id, bungie_member_id)
-            VALUES (?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE
-              username = VALUES(username),
-              bungie_id = VALUES(bungie_id),
-              bungie_member_id = VALUES(bungie_member_id)
-          `,
+          INSERT INTO user_roles (user_id, username, bungie_id, bungie_member_id)
+          VALUES (?, ?, ?, ?)
+          ON DUPLICATE KEY UPDATE
+            username = VALUES(username),
+            bungie_id = VALUES(bungie_id),
+            bungie_member_id = VALUES(bungie_member_id)
+        `,
             [userId, interaction.user.username, bungieId, membershipId]
           );
 

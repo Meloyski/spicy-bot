@@ -1,5 +1,26 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
 
+const db = require("../database"); // Import the promise-based db pool
+
+// Function to handle retry logic for database queries
+async function queryWithRetry(sql, params, retries = 3) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const [rows] = await db.query(sql, params); // Using db.query, which is promise-based
+      return rows; // Return the query result rows
+    } catch (error) {
+      if (attempt < retries) {
+        console.warn(
+          `[DB RETRY] Query failed on attempt ${attempt}, retrying...`
+        );
+      } else {
+        console.error(`[DB ERROR] Query failed after ${retries} attempts.`);
+        throw error;
+      }
+    }
+  }
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("_mod-message")
@@ -61,6 +82,23 @@ module.exports = {
       }
     } else {
       await interaction.channel.send(message);
+    }
+
+    // Log command usage in the database
+    const commandType = "mod-message";
+    const userId = interaction.user.id;
+
+    try {
+      await queryWithRetry(
+        `
+        INSERT INTO spicy_usage (command_type, command_timestamp, command_by)
+        VALUES (?, NOW(), ?);
+        `,
+        [commandType, userId]
+      );
+      console.log(`[DB LOG] Command usage logged in spicy_usage table.`);
+    } catch (error) {
+      console.error(`[DB ERROR] Failed to log command usage:`, error);
     }
 
     await interaction.deferReply({ ephemeral: true });
