@@ -498,7 +498,8 @@ client.on("guildMemberRemove", async (member) => {
 
       //Bungie Profile URL
       const bungieProfileURL =
-        user.bungie_member_id === "'unknown'"
+        user.bungie_member_id === "'unknown'" ||
+        user.bungie_member_id === "unknown"
           ? "NA"
           : `https://www.bungie.net/7/en/User/Profile/1/${user.bungie_member_id}`;
 
