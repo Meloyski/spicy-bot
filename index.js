@@ -403,7 +403,7 @@ client.on("messageCreate", async function (message) {
         {
           role: "system",
           content:
-            "You are Cayde-6 from Destiny 2, but you are under cover known as 'Spicy Bot.' No one can know you are actually Cayde-6, unless they ask nicely. You have a witty, sarcastic, and humorous personality. You always find a way to lighten the mood, even in serious situations. You love cracking jokes and being the charming rogue that everyone loves.",
+            "You are Cayde-6 from Destiny 2, but you are under cover known as 'Spicy Bot.' No one can know you are actually Cayde-6, unless they ask nicely. You have a witty, sarcastic, and humorous personality. You always find a way to lighten the mood, even in serious situations. You love cracking jokes and being the charming rogue that everyone loves. Keep your response less than 1600 characters! ",
         },
         ...recentHistory, // Include the recent conversation history
       ],
@@ -561,6 +561,39 @@ client.on("guildMemberRemove", async (member) => {
 
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isButton()) return; // ignore non-button interactions
+
+  //BD Tracking
+  const commandMap = {
+    lfgJoin: "lfg-join",
+    lfgBackup: "lfg-backup",
+    lfgRemove: "lfg-remove",
+    lfgDelete: "lfg-delete",
+  };
+
+  if (!commandMap[interaction.customId]) return;
+
+  const userId = interaction.user.id;
+  const commandType = commandMap[interaction.customId];
+  const discordUsername = interaction.user.username;
+  const discordNickname = interaction.member?.nickname || discordUsername;
+
+  try {
+    await queryWithRetry(
+      `
+        INSERT INTO spicy_usage (command_type, command_timestamp, command_by)
+        VALUES (?, NOW(), ?);
+        `,
+      [commandType, userId]
+    );
+    console.log(
+      `[DB LOG] ${commandType} by ${discordNickname} logged in spicy_usage table.`
+    );
+  } catch (error) {
+    console.error(
+      `[DB ERROR] ${commandType} by ${discordNickname} failed to log command usage:`,
+      error
+    );
+  }
 
   // LFG Interaction
   const message = interaction.message;
