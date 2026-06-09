@@ -65,6 +65,7 @@ let lastWelcomeTimestamp = 0;
 const WELCOME_TIMEOUT = 6 * 60 * 60 * 1000;
 
 client.on(Events.GuildMemberAdd, async (member) => {
+  console.log(`[EVENT:member-join] ${member.user.tag} (${member.id}) joined guild ${member.guild.name}`);
   trackUsage(member.guild.id, member.id, "member-join");
   try {
     const channel = member.guild.channels.cache.get(
@@ -177,6 +178,7 @@ client.on("messageCreate", async (message) => {
 
   if (!isMentioned && !isReply) return;
 
+  console.log(`[AI-CHAT] Triggered by ${message.author.tag} in #${(message.channel as { name?: string }).name ?? message.channelId} (mention=${isMentioned}, reply=${isReply})`);
   trackUsage(message.guildId ?? "dm", message.author.id, "ai-chat");
   const history = conversationHistories.get(message.channel.id) ?? [];
 
@@ -188,9 +190,12 @@ client.on("messageCreate", async (message) => {
         const referencedMessage = await message.channel.messages.fetch(
           message.reference.messageId,
         );
-        if (referencedMessage.author.id !== client.user?.id) return;
+        if (referencedMessage.author.id !== client.user?.id) {
+          console.log(`[AI-CHAT] Ignoring reply — original message was not from the bot (author: ${referencedMessage.author.tag})`);
+          return;
+        }
         originalMessageContent = referencedMessage.content;
-        console.log(`Original message: ${originalMessageContent}`);
+        console.log(`[AI-CHAT] Reply chain resolved to original message: "${originalMessageContent.slice(0, 80)}..."`);
       } catch (err) {
         console.error("Failed to fetch the original message:", err);
         return;
@@ -200,6 +205,7 @@ client.on("messageCreate", async (message) => {
     history.push({ role: "user", content: message.content });
     const recentHistory = history.slice(-10);
 
+    console.log(`[AI-CHAT] Sending to Anthropic (history length: ${recentHistory.length})`);
     const response = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",
       system:
@@ -213,6 +219,7 @@ client.on("messageCreate", async (message) => {
     history.push({ role: "assistant", content });
     conversationHistories.set(message.channel.id, history);
 
+    console.log(`[AI-CHAT] Replying to ${message.author.tag}: "${content.slice(0, 80)}..."`);
     await message.reply(content);
   } catch (err) {
     console.error(err);
@@ -224,6 +231,7 @@ client.on("messageCreate", async (message) => {
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
+  console.log(`[CMD:${interaction.commandName}] ${interaction.user.tag} in guild ${interaction.guild?.name ?? "dm"}`);
   trackUsage(
     interaction.guildId ?? "dm",
     interaction.user.id,
@@ -259,6 +267,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
 // Member leave
 client.on("guildMemberRemove", async (member) => {
+  console.log(`[EVENT:member-leave] ${member.user.tag} (${member.id}) left guild ${member.guild.name}`);
   trackUsage(member.guild.id, member.user.id, "member-leave");
   const channel = member.guild.channels.cache.get(
     process.env.MOD_CHANNEL ?? "",
@@ -282,6 +291,7 @@ client.on("interactionCreate", async (interaction) => {
 
   if (!commandMap[interaction.customId]) return;
 
+  console.log(`[BTN:${interaction.customId}] ${interaction.user.tag} in guild ${interaction.guild?.name ?? "dm"}`);
   trackUsage(
     interaction.guildId ?? "dm",
     interaction.user.id,
