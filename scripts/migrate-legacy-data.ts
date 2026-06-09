@@ -22,7 +22,7 @@ interface LegacyUsageRow {
   command_count: number;
   command_type: string | null;
   command_timestamp: Date | null;
-  command_by: string | null;
+  command_by: bigint | string | null;
 }
 
 // ---- Migration steps ----
@@ -111,7 +111,7 @@ async function migrateSpicyUsage() {
   let skipped = 0;
 
   for (const row of rows) {
-    if (!row.command_by || !row.command_type) {
+    if (row.command_by == null || !row.command_type) {
       console.log(`  [SKIP] Missing command_by or command_type`);
       skipped++;
       continue;
@@ -125,7 +125,7 @@ async function migrateSpicyUsage() {
     await prisma.usageEvent.create({
       data: {
         guildId,
-        userId: row.command_by,
+        userId: String(row.command_by),
         command: row.command_type,
         createdAt: row.command_timestamp ?? new Date(),
       },
