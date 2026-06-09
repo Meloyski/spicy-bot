@@ -14,6 +14,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import dotenv from 'dotenv';
 import type { SpicyCommand } from './types';
 import './types'; // activate Client module augmentation
+import { trackUsage } from './util/trackUsage';
 dotenv.config();
 
 const client = new Client({
@@ -61,6 +62,7 @@ let lastWelcomeTimestamp = 0;
 const WELCOME_TIMEOUT = 6 * 60 * 60 * 1000;
 
 client.on(Events.GuildMemberAdd, async (member) => {
+  trackUsage(member.guild.id, member.id, 'member-join');
   try {
     const channel = member.guild.channels.cache.get(process.env.LOBBY_CHANNEL ?? '');
     if (!channel || !channel.isTextBased()) {
@@ -161,6 +163,7 @@ client.on('messageCreate', async (message) => {
 
   if (!isMentioned && !isReply) return;
 
+  trackUsage(message.guildId ?? 'dm', message.author.id, 'ai-chat');
   const history = conversationHistories.get(message.channel.id) ?? [];
 
   try {
@@ -203,6 +206,7 @@ client.on('messageCreate', async (message) => {
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
+  trackUsage(interaction.guildId ?? 'dm', interaction.user.id, interaction.commandName);
   const command = interaction.client.commands.get(interaction.commandName);
   if (!command) {
     console.error(`No command matching ${interaction.commandName} was found.`);
@@ -227,6 +231,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
 // Member leave
 client.on('guildMemberRemove', async (member) => {
+  trackUsage(member.guild.id, member.user.id, 'member-leave');
   const channel = member.guild.channels.cache.get(process.env.MOD_CHANNEL ?? '');
   if (!channel || !channel.isTextBased()) return;
   await channel.send(`**${member.user.username}** has left the server.`).catch(console.error);
@@ -245,6 +250,7 @@ client.on('interactionCreate', async (interaction) => {
 
   if (!commandMap[interaction.customId]) return;
 
+  trackUsage(interaction.guildId ?? 'dm', interaction.user.id, `button:${interaction.customId}`);
   const userId = interaction.user.id;
   const guildMember = interaction.member as GuildMember | null;
 
