@@ -1,7 +1,9 @@
 node_modules
+dist
 archive
 package-lock.json
 .vscode
 .env
 .prettierrc
 .DS_Store 
+.claude

@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  discordId String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  destinyProfile DestinyProfile?
+  gamerProfiles  GamerProfile[]
+  lfgPosts       LfgPost[]
+  lfgSignups     LfgSignup[]
+}
+
+model Server {
+  id        String   @id @default(cuid())
+  guildId   String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  destinyModule    Boolean @default(true)
+  aiPersona        Boolean @default(true)
+  lfgEnabled       Boolean @default(true)
+  welcomeRoles     Boolean @default(true)
+
+  welcomeChannelId String?
+  familyRoleId     String?
+  lfgChannelId     String?
+  aiChannelId      String?
+
+  isPremium     Boolean   @default(false)
+  premiumSince  DateTime?
+  customPersona String?
+
+  lfgPosts LfgPost[]
+}
+
+model LfgPost {
+  id          String    @id @default(cuid())
+  guildId     String
+  server      Server    @relation(fields: [guildId], references: [guildId])
+  creatorId   String
+  creator     User      @relation(fields: [creatorId], references: [discordId])
+
+  game        String
+  description String?
+  platform    String?
+  maxPlayers  Int
+  scheduledAt DateTime?
+  expiresAt   DateTime?
+  messageId   String?
+  channelId   String?
+
+  createdAt DateTime  @default(now())
+
+  signups LfgSignup[]
+}
+
+model LfgSignup {
+  id       String   @id @default(cuid())
+  postId   String
+  post     LfgPost  @relation(fields: [postId], references: [id])
+  userId   String
+  user     User     @relation(fields: [userId], references: [discordId])
+  joinedAt DateTime @default(now())
+
+  @@unique([postId, userId])
+}
+
+model DestinyProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [discordId])
+  bungieId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model GamerProfile {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [discordId])
+  platform  String
+  handle    String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, platform])
+}
+
+model UsageEvent {
+  id        String   @id @default(cuid())
+  guildId   String
+  userId    String
+  command   String
+  createdAt DateTime @default(now())
+}
