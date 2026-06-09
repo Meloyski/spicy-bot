@@ -11,6 +11,7 @@
     "deploy:server": "git pull origin main && npm install && npm run build && npx prisma migrate deploy && pm2 restart spicy-bot",
     "deploy:commands": "node dist/deploy-commands.js",
     "delete-commands": "tsx delete-commands.ts",
+    "migrate": "tsx scripts/migrate-legacy-data.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
