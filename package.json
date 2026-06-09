@@ -1,13 +1,15 @@
 {
   "name": "spicy-bot",
-  "version": "1.0.0",
-  "description": "",
+  "version": "1.1.0",
+  "description": "Spicy Ramen House's resident bot ",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "deploy": "tsx deploy-commands.ts",
+    "deploy:server": "git pull origin main && npm install && npm run build && npx prisma migrate deploy && pm2 restart spicy-bot",
+    "deploy:commands": "node dist/deploy-commands.js"
     "delete-commands": "tsx delete-commands.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
